@@ -1,15 +1,15 @@
 # Project Description
 
-Simple-Server is a simple, and extremly light-weight solution to create powerful projects relying on the web with few lines of code. It uses python built-in packages to host server's and then handle http requests, as well as responses. It's extremely customizable, and allows you do to almost everything you might want.
+HTTP-PyServer is a simple, and extremly light-weight solution to create powerful projects relying on the web with few lines of code. It uses python built-in packages to host server's and then handle http requests, as well as responses. It's extremely customizable, and allows you do to almost everything you might want.
 
-Simple-Server is also very flexible on your project layout. It ensures security by allowing you to specify which files to send, and to where. Simple-Server allows you to do everything you need whilst keeping hands relaxed with as few lines of code as possible.
+HTTP-PyServer is also very flexible on your project layout. It ensures security by allowing you to specify which files to send, and to where. HTTP-PyServer allows you to do everything you need whilst keeping hands relaxed with as few lines of code as possible.
 
 # Installing
 
-Install Simple-Server using pip from the command line.
+Install HTTP-PyServer using pip from the command line.
 
 ```
-python -m pip install Simple-Server
+python -m pip install HTTP-PyServer
 ```
 
 # Simple Example
@@ -37,7 +37,7 @@ Press enter to exit...
 
 # Contributing
 
-Look on github, and create a fork of Simple-Server. Submit, pull requests, and any features will be looked at, and potentially implemented.
+Look on github, and create a fork of HTTP-PyServer. Submit, pull requests, and any features will be looked at, and potentially implemented.
 
 # Used Packages
 
