@@ -1,10 +1,9 @@
 import mimetypes
 import os
 
+from . import responses
 from . import request
 from . import routes
-from . import ResponseCodes
-from . import ResponseMessages
 
 def _get_template(*args,
                   data: bytes = '',
@@ -25,10 +24,13 @@ def _get_template(*args,
 def text(*args,
          text: str = '',
          filetype: str = 'txt',
-         code: int | ResponseCodes = 200,
-         message: str | ResponseMessages = 'OK',
+         code: int | responses.ResponseCodes = 200,
+         message: str | responses.ResponseMessages = 'OK',
          ) -> bytes:
     '''Returns a text response. Use this to return plain text, JSON, XML, etc.'''
+
+    text = text.encode(encoding = 'utf-8',
+                       errors = 'ignore')
 
     headers = {
 
@@ -49,8 +51,8 @@ def file(*args,
          filepath: str = '',
          request: request.Request = request.Request(),
          templated_vars: dict = {},
-         code: int | ResponseCodes = 200,
-         message: str | ResponseMessages = 'OK'
+         code: int | responses.ResponseCodes = 200,
+         message: str | responses.ResponseMessages = 'OK'
          ) -> bytes:
     '''Returns a file as a response. Use this to return HTML, CSS, JS, images, etc.'''
 
@@ -58,8 +60,8 @@ def file(*args,
 
         return text(text = routes.Routes.get_route('/404',
                                                    request = request),
-                    code = ResponseCodes.NOT_FOUND,
-                    message = ResponseMessages.NOT_FOUND)
+                    code = responses.ResponseCodes.NOT_FOUND,
+                    message = responses.ResponseMessages.NOT_FOUND)
             
     else:
 
@@ -120,8 +122,8 @@ def attachment(*args,
 
         return text(text = routes.Routes.get_route('/404',
                                                    request = request),
-                    code = ResponseCodes.NOT_FOUND,
-                    message = ResponseMessages.NOT_FOUND)
+                    code = responses.ResponseCodes.NOT_FOUND,
+                    message = responses.ResponseMessages.NOT_FOUND)
 
     with open(filepath, 'rb') as f:
 

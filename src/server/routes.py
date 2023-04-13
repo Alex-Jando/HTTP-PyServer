@@ -1,9 +1,8 @@
 import os
 
+from . import responses
 from . import request
 from . import render
-from . import ResponseCodes
-from . import ResponseMessages
 
 class Routes:
 
@@ -45,8 +44,8 @@ class Routes:
                 cls.routes[ressource_reference_path] = \
                     lambda _: render.text(text = Routes.get_route('/404',
                                                    request = request),
-                                          code = ResponseCodes.NOT_FOUND,
-                                          message = ResponseMessages.NOT_FOUND)
+                                          code = responses.ResponseCodes.NOT_FOUND,
+                                          message = responses.ResponseMessages.NOT_FOUND)
 
             else:
 
@@ -100,8 +99,8 @@ class Routes:
 
         return render.text(text = Routes.get_route('/404',
                                                    request = request),
-                           code = ResponseCodes.NOT_FOUND,
-                           message = ResponseMessages.NOT_FOUND)
+                           code = responses.ResponseCodes.NOT_FOUND,
+                           message = responses.ResponseMessages.NOT_FOUND)
 
     @classmethod
     def get_route(cls,

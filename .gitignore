@@ -1,3 +1,4 @@
 pyproject.toml
 dist/
 src/HTTP_PyServer.egg-info
+src/server/__pycache__/

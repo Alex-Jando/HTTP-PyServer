@@ -16,13 +16,12 @@ python -m pip install HTTP-PyServer
 
 ```
 # Saved as "main.py"
-from server import Routes, file, run
+from server import Routes, text, run
 
 @Routes.route(path = '/')
 def home(request):
 
-    return file(data='Hello, World!',
-                extension='html')
+    return text(text = 'Hello, world!')
 
 if __name__ == '__main__':
 
@@ -50,3 +49,4 @@ Although, no external packages were used, the following packages were imported. 
 - `os`
 - `urllib`
 - `mimetypes`
+- `enum`
