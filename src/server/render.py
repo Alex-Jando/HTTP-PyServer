@@ -1,60 +1,81 @@
 import mimetypes
 import os
-import urllib
 
 from . import request
 from . import routes
+from . import ResponseCodes
+from . import ResponseMessages
 
 def _get_template(*args,
                   data: bytes = '',
                   **template_vars) -> str:
-    '''Replaces all template variables in a data with their values. Template variables are defined as {{var_name}}, and are replaced with the value of var_name in template_vars.'''
-    
-    if not data:
-        
-        return ''
+    '''Replaces all template variables in a data with their values.
+    Template variables are defined as {{var_name}},
+    and are replaced with the value of var_name in template_vars.'''
     
     for var_name, var_value in template_vars.items():
 
-        data = data.replace(f'{{{{{var_name}}}}}', str(var_value))
+        data = data.replace(f'{{{{{var_name}}}}}'.encode(encoding = 'utf-8',
+                                                         errors = 'ignore'),
+                            var_value.encode(encoding = 'utf-8',
+                                             errors = 'ignore'))
 
     return data
 
+def text(*args,
+         text: str = '',
+         filetype: str = 'txt',
+         code: int | ResponseCodes = 200,
+         message: str | ResponseMessages = 'OK',
+         ) -> bytes:
+    '''Returns a text response. Use this to return plain text, JSON, XML, etc.'''
+
+    headers = {
+
+        'Content-Type': mimetypes.guess_type(f'file.{filetype.strip(".")}')[0],
+
+        'Content-Length': str(len(text)),
+
+    }
+
+    return (f'HTTP/1.1 {code} {message}\r\n'\
+            + '\r\n'.join([f'{key}: {value}' for key, value in headers.items()])) \
+            .encode(encoding = 'utf-8',
+            errors = 'ignore') \
+            + b'\r\n\r\n' \
+            + text
+
 def file(*args,
-         data: str = '',
          filepath: str = '',
-         extension: str = '',
-         request: request.Request = None,
+         request: request.Request = request.Request(),
          templated_vars: dict = {},
-         code: int = 200,
-         message: str = 'OK'
+         code: int | ResponseCodes = 200,
+         message: str | ResponseMessages = 'OK'
          ) -> bytes:
     '''Returns a file as a response. Use this to return HTML, CSS, JS, images, etc.'''
 
-    if filepath:
+    if not filepath or not os.path.exists(filepath):
 
-        if not os.path.exists(filepath):
-
-            data = routes.Routes.get_route(path = '404',
-                                           request = request)
+        return text(text = routes.Routes.get_route('/404',
+                                                   request = request),
+                    code = ResponseCodes.NOT_FOUND,
+                    message = ResponseMessages.NOT_FOUND)
             
-        else:
+    else:
 
-            with open(filepath, 'r') as file:
+        with open(filepath, 'rb') as file:
 
-                data = file.read()
+            data = file.read()
 
     if templated_vars:
 
         data = _get_template(data = data,
                              **templated_vars)
 
-    data = data.encode(encoding = 'utf-8',
-                        errors = 'ignore')
-
     headers = {
 
-        'Content-Type': mimetypes.guess_type(f'file.{extension.strip(".")}')[0] or mimetypes.guess_type(os.path.basename(filepath))[0] or 'text/plain',
+        'Content-Type': mimetypes.guess_type(os.path.basename(filepath))[0]\
+                        or 'application/octet-stream',
 
         'Content-Length': str(len(data)),
 
@@ -80,56 +101,46 @@ def redirect(*args,
                 <meta http-equiv="refresh" content="0;URL={url}" />\
             </head>\
         </html>'
-    
-    print(len(redirect_request))
-
-    print(len('<html>\
-            <head>\
-                <meta http-equiv="refresh" content="0;URL=" />\
-            </head>\
-        </html>'))
 
     return redirect_request.encode(encoding = 'utf-8',
                                    errors = 'ignore')
 
 def attachment(*args,
                filepath: str = '',
-               filedata: bytes = b'',
-               download: bool = False,
-               text: bool = False,
+               is_download: bool = False,
+               is_text: bool = False,
                filename: str = '',
-               request: request.Request = None) -> bytes:
-    '''Returns a file as an attachment. Can be used to download or view files.'''
+               request: request.Request = request.Request()) -> bytes:
+    '''Returns a file as an attachment.
+    Use this to return files for download or viewing.
+    Sometimes browsers will preview text files, so you can use is_text
+    to force the browser to display the raw text instead of previewing it.'''
 
-    if not filepath:
+    if not filepath or not os.path.exists(filepath):
 
-        data = filedata
+        return text(text = routes.Routes.get_route('/404',
+                                                   request = request),
+                    code = ResponseCodes.NOT_FOUND,
+                    message = ResponseMessages.NOT_FOUND)
 
-    elif not os.path.exists(filepath): # Filepath entered does not exist
+    with open(filepath, 'rb') as f:
 
-        return file(data = routes.Routes.get_route(path = '404',
-                                            request = request),
-                    code = 404,
-                    message = 'Not Found'
-                    )
-    
-    else:
-
-        with open(filepath, 'rb') as file:
-
-            data = file.read()
+        data = f.read()
 
     headers = {
 
-        'Content-Type': 'text/plain' if text else mimetypes.guess_type(os.path.basename(filepath))[0] or 'application/octet-stream',
+        'Content-Type': 'text/plain' if is_text else\
+                        mimetypes.guess_type(os.path.basename(filepath))[0]\
+                        or 'application/octet-stream',
 
         'Content-Length': str(len(data)),
 
-        'Content-Disposition': ('attachment' if download else 'inline') + f'; filename="{urllib.parse.quote(filename)}"' if filename else ('attachment' if download else 'inline')
+        'Content-Disposition': ('attachment' if is_download else 'inline')\
+                                + f'; filename="{filename}"' if filename else ''
 
     }
 
-    return (f'HTTP/1.1 200 OK\r\n' \
+    return ('HTTP/1.1 200 OK\r\n' \
             + '\r\n'.join([f'{key}: {value}' for key, value in headers.items()])) \
             .encode(encoding = 'utf-8',
             errors = 'ignore') \

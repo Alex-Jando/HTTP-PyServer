@@ -2,6 +2,8 @@ import os
 
 from . import request
 from . import render
+from . import ResponseCodes
+from . import ResponseMessages
 
 class Routes:
 
@@ -41,10 +43,10 @@ class Routes:
             if not os.path.exists(ressource_file_path):
 
                 cls.routes[ressource_reference_path] = \
-                    lambda _: render.file(
-                    data = cls.get_route('404'),
-                    code = 404,
-                    message = 'Not Found')
+                    lambda _: render.text(text = Routes.get_route('/404',
+                                                   request = request),
+                                          code = ResponseCodes.NOT_FOUND,
+                                          message = ResponseMessages.NOT_FOUND)
 
             else:
 
@@ -96,7 +98,10 @@ class Routes:
                 return cls.routes[route](request,
                                          *wildcard_values)
 
-        return cls.routes['/404'](request)
+        return render.text(text = Routes.get_route('/404',
+                                                   request = request),
+                           code = ResponseCodes.NOT_FOUND,
+                           message = ResponseMessages.NOT_FOUND)
 
     @classmethod
     def get_route(cls,
