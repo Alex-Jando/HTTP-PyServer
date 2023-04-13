@@ -29,6 +29,14 @@ def text(*args,
          ) -> bytes:
     '''Returns a text response. Use this to return plain text, JSON, XML, etc.'''
 
+    if type(code) == responses.ResponseCodes:
+
+        code = code.value
+
+    if type(message) == responses.ResponseMessages:
+
+        message = message.value
+
     text = text.encode(encoding = 'utf-8',
                        errors = 'ignore')
 
@@ -55,6 +63,14 @@ def file(*args,
          message: str | responses.ResponseMessages = 'OK'
          ) -> bytes:
     '''Returns a file as a response. Use this to return HTML, CSS, JS, images, etc.'''
+
+    if type(code) == responses.ResponseCodes:
+
+        code = code.value
+
+    if type(message) == responses.ResponseMessages:
+
+        message = message.value
 
     if not filepath or not os.path.exists(filepath):
 

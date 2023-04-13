@@ -8,23 +8,26 @@ class Routes:
 
     routes: dict[str, callable] = {
 
-        '/404': lambda request: f'''<!DOCTYPE html>
+        '/404': lambda request: render.text(text = f'''<!DOCTYPE html>
 
-        <html>
+                                            <html>
 
-        <head>
-        <title>404 Not Found</title>
-        </head>
+                                            <head>
+                                            <title>404 Not Found</title>
+                                            </head>
 
-        <body>
+                                            <body>
 
-        <h1 style="text-align: center;">404 Not Found</h1>
+                                            <h1 style="text-align: center;">404 Not Found</h1>
 
-        <p style="text-align: center;">Couldn't find any {request.path} endpoint.</p>
+                                            <p style="text-align: center;">Couldn't find any {request.path} endpoint.</p>
 
-        </body>
+                                            </body>
 
-        </html>'''.encode(encoding = 'utf-8', errors = 'ignore')
+                                            </html>''',
+                                            filetype = 'html',
+                                            code = responses.ResponseCodes.NOT_FOUND,
+                                            message = responses.ResponseMessages.NOT_FOUND)
 
     }
 
@@ -42,10 +45,7 @@ class Routes:
             if not os.path.exists(ressource_file_path):
 
                 cls.routes[ressource_reference_path] = \
-                    lambda _: render.text(text = Routes.get_route('/404',
-                                                   request = request),
-                                          code = responses.ResponseCodes.NOT_FOUND,
-                                          message = responses.ResponseMessages.NOT_FOUND)
+                    lambda _: cls.routes['/404'](request = request.Request())
 
             else:
 
@@ -97,10 +97,7 @@ class Routes:
                 return cls.routes[route](request,
                                          *wildcard_values)
 
-        return render.text(text = Routes.get_route('/404',
-                                                   request = request),
-                           code = responses.ResponseCodes.NOT_FOUND,
-                           message = responses.ResponseMessages.NOT_FOUND)
+        return cls.routes['/404'](request)
 
     @classmethod
     def get_route(cls,
