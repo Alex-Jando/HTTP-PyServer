@@ -4,6 +4,7 @@ class Request:
 
     def __init__(self,
                  *args,
+                 address: tuple = (),
                  method: str = '',
                  path: str = '',
                  version: str = '',
@@ -12,6 +13,8 @@ class Request:
                  query: dict = {},
                  values: dict = {}):
         '''Initializes the request class.'''
+
+        self.address = address
 
         self.method = method
 
@@ -30,6 +33,7 @@ class Request:
     @classmethod
     def from_string(cls,
                     *args,
+                    address: tuple = (),
                     request: str):
         '''Creates a request object from an HTTP request string.'''
 
@@ -77,7 +81,8 @@ class Request:
 
                 values[key] = value[0]
 
-            return cls(method = method,
+            return cls(address = address,
+                       method = method,
                        path = path,
                        version = version,
                        headers = headers,
@@ -85,7 +90,8 @@ class Request:
                        query = query,
                        values = values)
 
-        return cls(method = method,
+        return cls(address = address,
+                   method = method,
                    path = path,
                    version = version,
                    headers = headers,

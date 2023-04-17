@@ -34,7 +34,8 @@ def _handle_request(*args,
 
         try:
 
-            parsed_request = request.Request.from_string(request = raw_request)
+            parsed_request = request.Request.from_string(address = address,
+                                                         request = raw_request)
 
         except:
 
@@ -51,7 +52,8 @@ def _handle_request(*args,
                 raw_request += connection.recv(length_to_recieve - length_recieved).decode(encoding = 'utf-8',
                                                                                            errors = 'ignore')
 
-                parsed_request = request.Request.from_string(request = raw_request)
+                parsed_request = request.Request.from_string(address = address,
+                                                             request = raw_request)
 
         logging.debug(f'Recieved {parsed_request.method.title()} request from {address[0]}:{address[1]} for {parsed_request.path if parsed_request.path else "/"}')
 
