@@ -8,7 +8,8 @@ from . import routes
 
 def _handle_request(*args,
                     connection: socket.socket = None,
-                    address: socket.AddressInfo = None) -> None:
+                    address: socket.AddressInfo = None,
+                    logger: logging.Logger = None) -> None:
     '''Handles a request from a client.'''
         
     try:
@@ -25,8 +26,11 @@ def _handle_request(*args,
                 break
 
         if not raw_request:
+                
+                if logger:
 
-                logging.debug(f'Connection closed by client {address[0]}:{address[1]}.')
+                    logger.debug(f'Connection closed by client \
+{address[0]}:{address[1]}.')
 
                 connection.close()
 
@@ -37,9 +41,12 @@ def _handle_request(*args,
             parsed_request = request.Request.from_string(address = address,
                                                          request = raw_request)
 
-        except:
+        except Exception:
 
-            logging.error(f'Invalid request from {address[0]}:{address[1]}, closing connection.')
+            if logger:
+
+                logger.error(f'Invalid request from {address[0]}:{address[1]}, \
+closing connection.')
 
             connection.close()
 
@@ -47,40 +54,55 @@ def _handle_request(*args,
 
         if content_length:=parsed_request.headers.get('Content-Length'):
 
-            if length_recieved:=len(raw_request.split('\r\n\r\n')[1]) < (length_to_recieve:=int(content_length)):
+            if length_recieved:=len(raw_request.split('\r\n\r\n')[1]) < \
+            (length_to_recieve:=int(content_length)):
 
-                raw_request += connection.recv(length_to_recieve - length_recieved).decode(encoding = 'utf-8',
-                                                                                           errors = 'ignore')
+                raw_request += connection.recv(length_to_recieve - length_recieved)\
+                    .decode(encoding = 'utf-8',
+                            errors = 'ignore')
 
                 parsed_request = request.Request.from_string(address = address,
                                                              request = raw_request)
+                
+        if logger:
 
-        logging.debug(f'Recieved {parsed_request.method.title()} request from {address[0]}:{address[1]} for {parsed_request.path if parsed_request.path else "/"}')
+            logger.debug(f'Recieved {parsed_request.method.title()} request from \
+{address[0]}:{address[1]} for \
+{parsed_request.path if parsed_request.path else "/"}')
 
         connection.send(routes.Routes.get_route(path = parsed_request.path,
                                                 request = parsed_request))
+        
+        if logger:
 
-        logging.debug(f'Sent {parsed_request.method} response to {address[0]}:{address[1]} for {parsed_request.path if parsed_request.path else "/"}')
+            logger.debug(f'Sent {parsed_request.method} response to \
+{address[0]}:{address[1]} for {parsed_request.path if parsed_request.path else "/"}')
 
         connection.close()
 
     except Exception as e:
 
-        logging.error(f'Error while handling request from {address[0]}:{address[1]}: "{e}".')
+        if logger:
+
+            logger.error(f'Error while handling request from \
+{address[0]}:{address[1]}: "{e}".')
 
         try:
             
             connection.close()
 
-        except:
+        except Exception:
 
             pass
 
-        logging.debug(f'Connection closed with {address[0]}:{address[1]} by server.')
+        if logger:
+
+            logger.debug(f'Connection closed with {address[0]}:{address[1]} by server.')
 
 def _listen(*args,
            host: str = '127.0.0.1',
-           port: int = '127.0.0.1') -> None:
+           port: int = '127.0.0.1',
+           logger: logging.Logger = None) -> None:
     '''Listens for incoming connections and spawns a thread to handle each request.'''
 
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
@@ -89,51 +111,45 @@ def _listen(*args,
 
         s.listen()
 
-        logging.info(f'Server hosted on {host}:{port}.')
+        if logger:
+
+            logger.debug(f'Server hosted on {host}:{port}.')
 
         while True:
 
             connection, address = s.accept()
 
             threading.Thread(target = _handle_request,
-                             kwargs = {'connection': connection, 'address': address},
+                             kwargs = {'connection': connection,
+                                       'address': address,
+                                       'logger': logger},
                              daemon = True).start()
 
 def run(*args,
         host: str = '127.0.0.1',
         port: int = 80,
-        log: bool = False,
-        logfile: str = '') -> None:
-    '''Starts the server. If log is True, a log file will be created.'''
-    
-    if log:
+        logger: logging.Logger = None) -> None:
+    '''Starts the server.Specify the HOST and PORT to listen on.
+    Optionally, specify a logging.Logger object to log to.'''
 
-        if logfile:
-
-            logging.basicConfig(filename = logfile,
-                                level = logging.NOTSET,
-                                format = '%(levelname)s %(asctime)s in %(pathname)s %(funcName)s line %(lineno)d - %(message)s',
-                                datefmt='%Y-%m-%d %H:%M:%S')
-
-        else:
-
-            logging.basicConfig(level = logging.NOTSET,
-                                format = '%(levelname)s %(asctime)s in %(pathname)s %(funcName)s line %(lineno)d - %(message)s',
-                                datefmt='%Y-%m-%d %H:%M:%S')
+            
 
     threading.Thread(target = _listen,
-                    kwargs = {'host': host, 'port': port},
+                    kwargs = {'host': host,
+                              'port': port,
+                              'logger': logger},
                     daemon = True).start()
 
-    while True:
+    try:
 
-        try:
+        input('Press Enter to continue...\n')
 
-            input('Press enter to exit...\n')
+    except (KeyboardInterrupt, EOFError):
 
-        except:
+        pass
 
-            pass
+    if logger:
 
-        logging.info('Exiting server...')
-        sys.exit()
+        logger.info('Exiting server...')
+
+    sys.exit()
