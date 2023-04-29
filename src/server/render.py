@@ -5,8 +5,7 @@ from . import responses
 from . import request
 from . import routes
 
-def _get_template(*args,
-                  data: bytes = '',
+def _get_template(data: bytes,
                   **template_vars) -> str:
     '''Replaces all template variables in a data with their values.
     Template variables are defined as {{var_name}},
@@ -21,8 +20,8 @@ def _get_template(*args,
 
     return data
 
-def text(*args,
-         text: str = '',
+def text(text: str,
+         *,
          filetype: str = 'txt',
          code: int | responses.ResponseCodes = 200,
          message: str | responses.ResponseMessages = 'OK',
@@ -55,8 +54,8 @@ def text(*args,
             + b'\r\n\r\n' \
             + text
 
-def file(*args,
-         filepath: str = '',
+def file(filepath: str,
+         *,
          request: request.Request = request.Request(),
          templated_vars: dict = {},
          code: int | responses.ResponseCodes = 200,
@@ -106,8 +105,7 @@ def file(*args,
             + b'\r\n\r\n' \
             + data
 
-def redirect(*args,
-             url: str = '') -> bytes:
+def redirect(url: str) -> bytes:
     '''Returns a redirect request to the specified URL.'''
 
     redirect_request = f'HTTP/1.1 301 See Other\
@@ -123,8 +121,8 @@ def redirect(*args,
     return redirect_request.encode(encoding = 'utf-8',
                                    errors = 'ignore')
 
-def attachment(*args,
-               filepath: str = '',
+def attachment(filepath: str = '',
+               *,
                is_download: bool = False,
                is_text: bool = False,
                filename: str = '',

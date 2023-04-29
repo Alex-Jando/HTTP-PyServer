@@ -10,31 +10,31 @@ class Routes:
 
         '/404': lambda request: render.text(text = f'''<!DOCTYPE html>
 
-                                            <html>
+<html>
 
-                                            <head>
-                                            <title>404 Not Found</title>
-                                            </head>
+<head>
+<title>404 Not Found</title>
+</head>
 
-                                            <body>
+<body>
 
-                                            <h1 style="text-align: center;">404 Not Found</h1>
+<h1 style="text-align: center;">404 Not Found</h1>
 
-                                            <p style="text-align: center;">Couldn't find any {request.path} endpoint.</p>
+<p style="text-align: center;">Couldn't find any {request.path} endpoint.</p>
 
-                                            </body>
+</body>
 
-                                            </html>''',
-                                            filetype = 'html',
-                                            code = responses.ResponseCodes.NOT_FOUND,
-                                            message = responses.ResponseMessages.NOT_FOUND)
+</html>''',
+filetype = 'html',
+code = responses.ResponseCodes.NOT_FOUND,
+message = responses.ResponseMessages.NOT_FOUND)
 
     }
 
     @classmethod
     def route(cls,
-              *args,
               path: str,
+              *,
               ressources: tuple[tuple[str, str]] = []) -> callable:
         '''Adds a route to the routes dictionary.'''
 
@@ -64,8 +64,8 @@ class Routes:
     
     @classmethod
     def _get_wildcard_path(cls,
-                           *args,
                            path: str,
+                           *,
                            request: request.Request) -> bytes:
         '''Gets a route with wildcard values.'''
     
@@ -101,8 +101,8 @@ class Routes:
 
     @classmethod
     def get_route(cls,
-                  *args,
-                  path: str = '',
+                  path: str,
+                  *,
                   request: request.Request = request.Request()) -> bytes:
         '''Gets a route from the routes dictionary.'''
 

@@ -6,100 +6,105 @@ import logging
 from . import request
 from . import routes
 
-def _handle_request(*args,
+def _handle_request(*,
                     connection: socket.socket = None,
                     address: socket.AddressInfo = None,
                     logger: logging.Logger = None) -> None:
     '''Handles a request from a client.'''
+
+    while True:
         
-    try:
+        try:
 
-        raw_request = str()
+            raw_request = str()
 
-        while True:
+            while True:
 
-            raw_request += connection.recv(4096).decode(encoding = 'utf-8',
-                                                        errors = 'ignore')
+                raw_request += connection.recv(4096).decode(encoding = 'utf-8',
+                                                            errors = 'ignore')
 
-            if '\r\n\r\n' in raw_request or raw_request == '':
+                if '\r\n\r\n' in raw_request or raw_request == '':
 
-                break
+                    break
 
-        if not raw_request:
-                
+            if not raw_request:
+                    
+                    if logger:
+
+                        logger.debug(f'Connection closed by client \
+{address[0]}:{address[1]}.')
+
+                    connection.close()
+
+                    return None
+
+            try:
+
+                parsed_request = request.Request.from_string(address = address,
+                                                            request = raw_request)
+
+            except Exception:
+
                 if logger:
 
-                    logger.debug(f'Connection closed by client \
-{address[0]}:{address[1]}.')
+                    logger.error(f'Invalid request from {address[0]}:{address[1]}, \
+closing connection.')
 
                 connection.close()
 
                 return None
 
-        try:
+            if content_length:=parsed_request.headers.get('Content-Length'):
 
-            parsed_request = request.Request.from_string(address = address,
-                                                         request = raw_request)
+                if length_recieved:=len(raw_request.split('\r\n\r\n')[1]) < \
+                (length_to_recieve:=int(content_length)):
 
-        except Exception:
+                    raw_request += connection.recv(length_to_recieve - length_recieved)\
+                        .decode(encoding = 'utf-8',
+                                errors = 'ignore')
 
+                    parsed_request = request.Request.from_string(address = address,
+                                                                request = raw_request)
+                    
             if logger:
 
-                logger.error(f'Invalid request from {address[0]}:{address[1]}, \
-closing connection.')
-
-            connection.close()
-
-            return None
-
-        if content_length:=parsed_request.headers.get('Content-Length'):
-
-            if length_recieved:=len(raw_request.split('\r\n\r\n')[1]) < \
-            (length_to_recieve:=int(content_length)):
-
-                raw_request += connection.recv(length_to_recieve - length_recieved)\
-                    .decode(encoding = 'utf-8',
-                            errors = 'ignore')
-
-                parsed_request = request.Request.from_string(address = address,
-                                                             request = raw_request)
-                
-        if logger:
-
-            logger.debug(f'Recieved {parsed_request.method.title()} request from \
+                logger.debug(f'Recieved {parsed_request.method.title()} request from \
 {address[0]}:{address[1]} for \
 {parsed_request.path if parsed_request.path else "/"}')
 
-        connection.send(routes.Routes.get_route(path = parsed_request.path,
-                                                request = parsed_request))
-        
-        if logger:
+            connection.send(routes.Routes.get_route(path = parsed_request.path,
+                                                    request = parsed_request))
+            
+            if logger:
 
-            logger.debug(f'Sent {parsed_request.method} response to \
+                logger.debug(f'Sent {parsed_request.method} response to \
 {address[0]}:{address[1]} for {parsed_request.path if parsed_request.path else "/"}')
+                
+            if not parsed_request.headers.get('Connection') == 'keep-alive':
 
-        connection.close()
+                try:
+            
+                    connection.close()
 
-    except Exception as e:
+                except Exception:
 
-        if logger:
+                    pass
 
-            logger.error(f'Error while handling request from \
+                if logger:
+
+                    logger.debug(f'Connection closed with \
+{address[0]}:{address[1]} by server.')
+
+                break
+
+        except Exception as e:
+
+            if logger:
+
+                logger.error(f'Error while handling request from \
 {address[0]}:{address[1]}: "{e}".')
 
-        try:
-            
-            connection.close()
-
-        except Exception:
-
-            pass
-
-        if logger:
-
-            logger.debug(f'Connection closed with {address[0]}:{address[1]} by server.')
-
-def _listen(*args,
+def _listen(*,
            host: str = '127.0.0.1',
            port: int = '127.0.0.1',
            logger: logging.Logger = None) -> None:
@@ -125,14 +130,12 @@ def _listen(*args,
                                        'logger': logger},
                              daemon = True).start()
 
-def run(*args,
+def run(*,
         host: str = '127.0.0.1',
         port: int = 80,
         logger: logging.Logger = None) -> None:
     '''Starts the server.Specify the HOST and PORT to listen on.
-    Optionally, specify a logging.Logger object to log to.'''
-
-            
+    Optionally, specify a logging.Logger object to log to.'''  
 
     threading.Thread(target = _listen,
                     kwargs = {'host': host,

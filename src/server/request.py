@@ -1,17 +1,17 @@
 import urllib
+import json
 
 class Request:
 
     def __init__(self,
-                 *args,
+                 *,
                  address: tuple = (),
                  method: str = '',
                  path: str = '',
                  version: str = '',
                  headers: dict = {},
                  body: str = '',
-                 query: dict = {},
-                 values: dict = {}):
+                 query: dict = {}):
         '''Initializes the request class.'''
 
         self.address = address
@@ -27,8 +27,6 @@ class Request:
         self.body = body
 
         self.query = query
-
-        self.values = values
 
     @classmethod
     def from_string(cls,
@@ -59,7 +57,7 @@ class Request:
 
             query[key] = value[0]
 
-        headers = dict()
+        headers = {}
 
         for line in lines[1:]:
 
@@ -73,23 +71,6 @@ class Request:
 
         body = '\r\n'.join(lines[lines.index('') + 1:])
 
-        if method == 'POST':
-
-            values = dict()
-
-            for key, value in urllib.parse.parse_qs(body).items():
-
-                values[key] = value[0]
-
-            return cls(address = address,
-                       method = method,
-                       path = path,
-                       version = version,
-                       headers = headers,
-                       body = body,
-                       query = query,
-                       values = values)
-
         return cls(address = address,
                    method = method,
                    path = path,
@@ -97,3 +78,21 @@ class Request:
                    headers = headers,
                    body = body,
                    query = query)
+    
+    def __str__(self):
+        '''Returns the request as an HTTP request string.'''
+
+        return f'{self.method} {self.path} {self.version}\r\n' + \
+'\r\n'.join([f'{key}: {value}' for key, value in self.headers.items()]) + \
+'\r\n\r\n' + \
+self.body
+
+    def json(self):
+        '''Returns the request body as a JSON object.'''
+
+        return json.loads(self.body)
+    
+    def form(self):
+        '''Returns the request body as parsed urlencoded form data.'''
+
+        return urllib.parse.parse_qs(self.body)
