@@ -47,6 +47,7 @@ Although, no external packages were used, the following packages were imported. 
 - `sys`
 - `logging`
 - `os`
+- `json`
 - `urllib`
 - `mimetypes`
 - `enum`
