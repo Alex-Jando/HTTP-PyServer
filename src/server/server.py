@@ -71,11 +71,9 @@ closing connection.')
                 logger.debug(f'Recieved {parsed_request.method.title()} request from \
 {address[0]}:{address[1]} for \
 {parsed_request.path if parsed_request.path else "/"}')
-                
-            message = routes.Routes.get_route(path = parsed_request.path,
-                                              request = parsed_request)
 
-            connection.send(message)
+            connection.send(routes.Routes.get_route(path = parsed_request.path,
+                                                    request = parsed_request))
             
             if logger:
 
