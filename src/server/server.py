@@ -71,9 +71,11 @@ closing connection.')
                 logger.debug(f'Recieved {parsed_request.method.title()} request from \
 {address[0]}:{address[1]} for \
 {parsed_request.path if parsed_request.path else "/"}')
+                
+            message = routes.Routes.get_route(path = parsed_request.path,
+                                              request = parsed_request)
 
-            connection.send(routes.Routes.get_route(path = parsed_request.path,
-                                                    request = parsed_request))
+            connection.send(message)
             
             if logger:
 
@@ -95,7 +97,7 @@ closing connection.')
                     logger.debug(f'Connection closed with \
 {address[0]}:{address[1]} by server.')
 
-                break
+                return None
 
         except Exception as e:
 
@@ -103,6 +105,9 @@ closing connection.')
 
                 logger.error(f'Error while handling request from \
 {address[0]}:{address[1]}: "{e}".')
+                
+
+            return None
 
 def _listen(*,
            host: str = '127.0.0.1',
@@ -134,7 +139,7 @@ def run(*,
         host: str = '127.0.0.1',
         port: int = 80,
         logger: logging.Logger = None) -> None:
-    '''Starts the server.Specify the HOST and PORT to listen on.
+    '''Starts the server. Specify the HOST and PORT to listen on.
     Optionally, specify a logging.Logger object to log to.'''  
 
     threading.Thread(target = _listen,

@@ -1,9 +1,11 @@
 import mimetypes
 import os
 
-from . import responses
+from . import response_codes
 from . import request
+from . import response
 from . import routes
+from . import response_messages
 
 def _get_template(data: bytes,
                   **template_vars) -> str:
@@ -23,16 +25,16 @@ def _get_template(data: bytes,
 def text(text: str,
          *,
          filetype: str = 'txt',
-         code: int | responses.ResponseCodes = 200,
-         message: str | responses.ResponseMessages = 'OK',
-         ) -> bytes:
+         code: int | response_codes.ResponseCodes = 200,
+         message: str | response_messages.ResponseMessages = 'OK',
+         ) -> response.Response:
     '''Returns a text response. Use this to return plain text, JSON, XML, etc.'''
 
-    if type(code) == responses.ResponseCodes:
+    if type(code) == response_codes.ResponseCodes:
 
         code = code.value
 
-    if type(message) == responses.ResponseMessages:
+    if type(message) == response_messages.ResponseMessages:
 
         message = message.value
 
@@ -47,36 +49,32 @@ def text(text: str,
 
     }
 
-    return (f'HTTP/1.1 {code} {message}\r\n'\
-            + '\r\n'.join([f'{key}: {value}' for key, value in headers.items()])) \
-            .encode(encoding = 'utf-8',
-            errors = 'ignore') \
-            + b'\r\n\r\n' \
-            + text
+    return response.Response(version = 1.1,
+                             code = code,
+                             message = message,
+                             headers = headers,
+                             body = text)
 
 def file(filepath: str,
          *,
          request: request.Request = request.Request(),
          templated_vars: dict = {},
-         code: int | responses.ResponseCodes = 200,
-         message: str | responses.ResponseMessages = 'OK'
-         ) -> bytes:
+         code: int | response_codes.ResponseCodes = 200,
+         message: str | response_messages.ResponseMessages = 'OK'
+         ) -> response.Response:
     '''Returns a file as a response. Use this to return HTML, CSS, JS, images, etc.'''
 
-    if type(code) == responses.ResponseCodes:
+    if type(code) == response_codes.ResponseCodes:
 
         code = code.value
 
-    if type(message) == responses.ResponseMessages:
+    if type(message) == response_messages.ResponseMessages:
 
         message = message.value
 
     if not filepath or not os.path.exists(filepath):
 
-        return text(text = routes.Routes.get_route('/404',
-                                                   request = request),
-                    code = responses.ResponseCodes.NOT_FOUND,
-                    message = responses.ResponseMessages.NOT_FOUND)
+        return routes.Routes.get_route('/404', request = request)
             
     else:
 
@@ -91,21 +89,20 @@ def file(filepath: str,
 
     headers = {
 
-        'Content-Type': mimetypes.guess_type(os.path.basename(filepath))[0]\
+        'Content-Type': mimetypes.guess_type(filepath)[0]\
                         or 'application/octet-stream',
 
         'Content-Length': str(len(data)),
 
     }
 
-    return (f'HTTP/1.1 {code} {message}\r\n' \
-            + '\r\n'.join([f'{key}: {value}' for key, value in headers.items()])) \
-            .encode(encoding = 'utf-8',
-            errors = 'ignore') \
-            + b'\r\n\r\n' \
-            + data
+    return response.Response(version = 1.1,
+                             code = code,
+                             message = message,
+                             headers = headers,
+                             body = data)
 
-def redirect(url: str) -> bytes:
+def redirect(url: str) -> response.Response:
     '''Returns a redirect request to the specified URL.'''
 
     redirect_request = f'HTTP/1.1 301 See Other\
@@ -118,15 +115,20 @@ def redirect(url: str) -> bytes:
             </head>\
         </html>'
 
-    return redirect_request.encode(encoding = 'utf-8',
-                                   errors = 'ignore')
+    return response.Response(version = 1.1,
+                             code = response_codes.ResponseCodes.SEE_OTHER,
+                             message = response_messages.ResponseMessages.SEE_OTHER,
+                             headers = {'Location': url,
+                                        'Content-Type': 'text/html',
+                                        'Content-Length': str(len(redirect_request))},
+                             body = redirect_request)
 
 def attachment(filepath: str = '',
                *,
                is_download: bool = False,
                is_text: bool = False,
                filename: str = '',
-               request: request.Request = request.Request()) -> bytes:
+               request: request.Request = request.Request()) -> response.Response:
     '''Returns a file as an attachment.
     Use this to return files for download or viewing.
     Sometimes browsers will preview text files, so you can use is_text
@@ -134,10 +136,7 @@ def attachment(filepath: str = '',
 
     if not filepath or not os.path.exists(filepath):
 
-        return text(text = routes.Routes.get_route('/404',
-                                                   request = request),
-                    code = responses.ResponseCodes.NOT_FOUND,
-                    message = responses.ResponseMessages.NOT_FOUND)
+        return routes.Routes.get_route('/404', request = request)
 
     with open(filepath, 'rb') as f:
 
@@ -146,19 +145,18 @@ def attachment(filepath: str = '',
     headers = {
 
         'Content-Type': 'text/plain' if is_text else\
-                        mimetypes.guess_type(os.path.basename(filepath))[0]\
+                        mimetypes.guess_type(filepath)[0]\
                         or 'application/octet-stream',
 
         'Content-Length': str(len(data)),
 
         'Content-Disposition': ('attachment' if is_download else 'inline')\
-                                + f'; filename="{filename}"' if filename else ''
+                                + (f'; filename="{filename}"' if filename else '')
 
     }
 
-    return ('HTTP/1.1 200 OK\r\n' \
-            + '\r\n'.join([f'{key}: {value}' for key, value in headers.items()])) \
-            .encode(encoding = 'utf-8',
-            errors = 'ignore') \
-            + b'\r\n\r\n' \
-            + data
+    return response.Response(version = 1.1,
+                             code = response_codes.ResponseCodes.OK,
+                             message = response_messages.ResponseMessages.OK,
+                             headers = headers,
+                             body = data)

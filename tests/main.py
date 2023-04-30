@@ -1,9 +1,9 @@
-from server import Routes, text, run
+from server import Routes, run
 
-@Routes.route(path = '/')
-def home(request):
+@Routes.route('/')
+def index(request):
 
-    return text('Hello, World!')
+    return 'Hello, World!'
 
 if __name__ == '__main__':
 

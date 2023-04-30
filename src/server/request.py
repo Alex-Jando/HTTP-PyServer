@@ -2,6 +2,7 @@ import urllib
 import json
 
 class Request:
+    '''Represents an HTTP request.'''
 
     def __init__(self,
                  *,

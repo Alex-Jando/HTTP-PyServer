@@ -1,14 +1,22 @@
 import os
 
-from . import responses
+from . import response_messages
+from . import response_codes
+from . import response
 from . import request
 from . import render
 
 class Routes:
+    '''Stores, sorts, and handles a collection of routes.'''
 
     routes: dict[str, callable] = {
 
-        '/404': lambda request: render.text(text = f'''<!DOCTYPE html>
+        '/404': lambda request: response.Response(version = 1.1,
+code = response_codes.ResponseCodes.NOT_FOUND,
+message = response_messages.ResponseMessages.NOT_FOUND,
+headers = {'Content-Type': 'text/html',
+            'Content-Length': '202'},
+body = b'''<!DOCTYPE html>
 
 <html>
 
@@ -20,14 +28,13 @@ class Routes:
 
 <h1 style="text-align: center;">404 Not Found</h1>
 
-<p style="text-align: center;">Couldn't find any {request.path} endpoint.</p>
+<hr>
+
+<p style="text-align: center;">HTTP-PyServer</p>
 
 </body>
 
-</html>''',
-filetype = 'html',
-code = responses.ResponseCodes.NOT_FOUND,
-message = responses.ResponseMessages.NOT_FOUND)
+</html>''')
 
     }
 
@@ -35,7 +42,7 @@ message = responses.ResponseMessages.NOT_FOUND)
     def route(cls,
               path: str,
               *,
-              ressources: tuple[tuple[str, str]] = []) -> callable:
+              ressources: tuple[tuple[str, str]] = ()) -> callable:
         '''Adds a route to the routes dictionary.'''
 
         for ressource_file_path, ressource_reference_path in ressources:
@@ -94,10 +101,27 @@ message = responses.ResponseMessages.NOT_FOUND)
 
                         wildcard_values.append(sub_path)
 
-                return cls.routes[route](request,
+                message =  cls.routes[route](request,
                                          *wildcard_values)
+                
+                if isinstance(message, str):
 
-        return cls.routes['/404'](request)
+                    return bytes(render.text(message))
+                
+                elif isinstance(message, bytes):
+
+                    return message
+                
+                elif isinstance(message, response.Response):
+
+                    return bytes(message)
+                
+                else:
+
+                    raise TypeError(f'Expected function for {request.path} \
+to return str, bytes, or Response, got {type(message)}.')
+
+        return Routes.get_route('/404', request = request)
 
     @classmethod
     def get_route(cls,
@@ -108,7 +132,24 @@ message = responses.ResponseMessages.NOT_FOUND)
 
         if path in cls.routes:
 
-            return cls.routes[path](request)
+            message = cls.routes[path](request)
+
+            if isinstance(message, str):
+
+                return bytes(render.text(text = message))
+            
+            elif isinstance(message, bytes):
+
+                return message
+            
+            elif isinstance(message, response.Response):
+
+                return bytes(message)
+            
+            else:
+
+                raise TypeError(f'Expected str, bytes, or Response,\
+got {type(message)}.')
 
         else:
 
