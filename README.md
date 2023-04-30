@@ -16,12 +16,12 @@ python -m pip install HTTP-PyServer
 
 ```
 # Saved as "main.py"
-from server import Routes, text, run
+from server import Routes, run
 
-@Routes.route(path = '/')
-def home(request):
+@Routes.route('/')
+def index(request):
 
-    return text(text = 'Hello, world!')
+    return 'Hello, world!'
 
 if __name__ == '__main__':
 
