@@ -24,8 +24,6 @@ class Server(routes.Routes):
 
         self._logger: logging.Logger = logger
 
-        self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
     def start(self) -> None:
         '''Starts the server.'''
         
@@ -59,6 +57,8 @@ class Server(routes.Routes):
     def _listen(self) -> None:
         '''Listens for incoming connections 
         and spawns a thread to handle each request.'''
+
+        self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
         self._socket.bind((self._host, self._port))
 
