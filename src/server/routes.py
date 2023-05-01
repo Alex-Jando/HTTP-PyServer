@@ -9,14 +9,10 @@ from . import render
 class Routes:
     '''Stores, sorts, and handles a collection of routes.'''
 
-    routes: dict[str, callable] = {
+    def __init__(self) -> None:
 
-        '/404': lambda request: response.Response(version = 1.1,
-code = response_codes.ResponseCodes.NOT_FOUND,
-message = response_messages.ResponseMessages.NOT_FOUND,
-headers = {'Content-Type': 'text/html',
-            'Content-Length': '202'},
-body = b'''<!DOCTYPE html>
+        self._routes: dict[str: callable] = {
+            '/404': lambda request: render.text('''<!DOCTYPE html>
 
 <html>
 
@@ -34,49 +30,49 @@ body = b'''<!DOCTYPE html>
 
 </body>
 
-</html>''')
-
+</html>''',
+filetype='html',
+code = response_codes.ResponseCodes.NOT_FOUND,
+message = response_messages.ResponseMessages.NOT_FOUND)
     }
 
-    @classmethod
-    def route(cls,
+    def route(self,
               path: str,
               *,
-              ressources: tuple[tuple[str, str]] = ()) -> callable:
+              ressources: dict[str: str] = {}) -> callable:
         '''Adds a route to the routes dictionary.'''
 
-        for ressource_file_path, ressource_reference_path in ressources:
+        for ressource_file_path, ressource_reference_path in ressources.items():
 
             ressource_reference_path = '/' + ressource_reference_path.strip('/')
 
             if not os.path.exists(ressource_file_path):
 
-                cls.routes[ressource_reference_path] = \
-                    lambda _: cls.routes['/404'](request = request.Request())
+                self._routes[ressource_reference_path] = \
+                    lambda _: self._routes['/404'](request = request.Request())
 
             else:
 
                 ressource = render.attachment(filepath = ressource_file_path)
 
-                cls.routes[ressource_reference_path] = \
+                self._routes[ressource_reference_path] = \
                 lambda _, ressource = ressource: ressource
 
         def callable_route(route_function):
 
-            cls.routes[path.rstrip('/')] = route_function
+            self._routes[path.rstrip('/')] = route_function
 
             return route_function
         
         return callable_route
     
-    @classmethod
-    def _get_wildcard_path(cls,
+    def _get_wildcard_path(self,
                            path: str,
                            *,
                            request: request.Request) -> bytes:
         '''Gets a route with wildcard values.'''
     
-        for route in cls.routes:
+        for route in self._routes:
 
             if not len(route.split('/')) == len(path.split('/')):
 
@@ -101,7 +97,7 @@ body = b'''<!DOCTYPE html>
 
                         wildcard_values.append(sub_path)
 
-                message =  cls.routes[route](request,
+                message =  self._routes[route](request,
                                          *wildcard_values)
                 
                 if isinstance(message, str):
@@ -121,18 +117,17 @@ body = b'''<!DOCTYPE html>
                     raise TypeError(f'Expected function for {request.path} \
 to return str, bytes, or Response, got {type(message)}.')
 
-        return Routes.get_route('/404', request = request)
+        return self._get_route('/404', request = request)
 
-    @classmethod
-    def get_route(cls,
+    def _get_route(self,
                   path: str,
                   *,
                   request: request.Request = request.Request()) -> bytes:
-        '''Gets a route from the routes dictionary.'''
+        '''Gets a route from the _routes dictionary.'''
 
-        if path in cls.routes:
+        if path in self._routes:
 
-            message = cls.routes[path](request)
+            message = self._routes[path](request)
 
             if isinstance(message, str):
 
@@ -148,10 +143,10 @@ to return str, bytes, or Response, got {type(message)}.')
             
             else:
 
-                raise TypeError(f'Expected str, bytes, or Response,\
-got {type(message)}.')
+                raise TypeError(f'Expected function for {request.path} \
+to return str, bytes, or Response, got {type(message)}.')
 
         else:
 
-            return cls._get_wildcard_path(path = path,
+            return self._get_wildcard_path(path = path,
                                           request = request)

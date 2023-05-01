@@ -1,10 +1,12 @@
-from server import Routes, run
+import server
 
-@Routes.route('/')
-def index(request):
+app = server.Server()
 
-    return 'Hello, World!'
+@app.route('/')
+def _(request):
 
-if __name__ == '__main__':
+    return 'Hello, world!'
 
-    run()
+with app:
+    
+    app.wait()

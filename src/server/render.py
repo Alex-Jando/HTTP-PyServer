@@ -4,7 +4,6 @@ import os
 from . import response_codes
 from . import request
 from . import response
-from . import routes
 from . import response_messages
 
 def _get_template(data: bytes,
@@ -74,7 +73,7 @@ def file(filepath: str,
 
     if not filepath or not os.path.exists(filepath):
 
-        return routes.Routes.get_route('/404', request = request)
+        raise FileNotFoundError(f'File not found: {filepath}')
             
     else:
 
@@ -136,7 +135,7 @@ def attachment(filepath: str = '',
 
     if not filepath or not os.path.exists(filepath):
 
-        return routes.Routes.get_route('/404', request = request)
+        raise FileNotFoundError(f'File not found: {filepath}')
 
     with open(filepath, 'rb') as f:
 

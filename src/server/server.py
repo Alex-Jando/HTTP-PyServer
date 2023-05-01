@@ -1,161 +1,195 @@
 import threading
 import socket
-import sys
 import logging
+from typing import Self
 
 from . import request
 from . import routes
 
-def _handle_request(*,
-                    connection: socket.socket = None,
-                    address: socket.AddressInfo = None,
-                    logger: logging.Logger = None) -> None:
-    '''Handles a request from a client.'''
+class Server(routes.Routes):
+    '''HTTP server running on a specified host and port.'''
 
-    while True:
+    def __init__(self,
+                 *,
+                 host: str = '127.0.0.1',
+                 port: int = 80,
+                 logger: logging.Logger = None) -> None:
+        '''Initializes the server class.'''
         
+        super().__init__()
+        
+        self._host: str = host
+
+        self._port: int = port
+
+        self._logger: logging.Logger = logger
+
+        self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+    def start(self) -> None:
+        '''Starts the server.'''
+        
+        threading.Thread(target = self._listen,
+                         daemon = True).start()
+        
+    def wait(self) -> None:
+        '''Waits for Enter key press or KeyboardInterrupt.'''
+
         try:
 
-            raw_request = str()
+            input('Press Enter to continue...\n')
 
-            while True:
+        except (KeyboardInterrupt, EOFError):
 
-                raw_request += connection.recv(4096).decode(encoding = 'utf-8',
-                                                            errors = 'ignore')
+            pass
 
-                if '\r\n\r\n' in raw_request or raw_request == '':
+    def stop(self) -> None:
+        '''Stops the server.'''
 
-                    break
+        if self._logger:
 
-            if not raw_request:
-                    
-                    if logger:
+            self._logger.info('Stopping server...')
 
-                        logger.debug(f'Connection closed by client \
+        self._socket.close()
+
+        if self._logger:
+
+            self._logger.info('Server stopped.')
+
+    def _listen(self) -> None:
+        '''Listens for incoming connections 
+        and spawns a thread to handle each request.'''
+
+        self._socket.bind((self._host, self._port))
+
+        self._socket.listen()
+
+        if self._logger:
+
+            self._logger.info(f'Server hosted on {self._host}:{self._port}.')
+            
+        while True:
+
+            try:
+
+                connection, address = self._socket.accept()
+
+                threading.Thread(target = self._handle_request,
+                                kwargs = {'connection': connection,
+                                        'address': address},
+                                daemon = True).start()
+
+            except OSError:
+
+                break
+                
+    def _handle_request(self,
+                        connection: socket.socket,
+                        address: socket.AddressInfo) -> None:
+        '''Handles a request from a client.'''
+
+        while True:
+            
+            try:
+
+                raw_request = ''
+
+                while True:
+
+                    raw_request += connection.recv(4096).decode(encoding = 'utf-8',
+                                                                errors = 'ignore')
+
+                    if '\r\n\r\n' in raw_request or raw_request == '':
+
+                        break
+
+                if not raw_request:
+                        
+                        if self._logger:
+
+                            self._logger.debug(f'Connection closed by client \
 {address[0]}:{address[1]}.')
+
+                        connection.close()
+
+                        return None
+
+                try:
+
+                    parsed_request = request.Request.from_string(address = address,
+                                                                 request = raw_request)
+
+                except Exception:
+
+                    if self._logger:
+
+                        self._logger.error(f'Invalid request from \
+{address[0]}:{address[1]}, closing connection.')
 
                     connection.close()
 
                     return None
 
-            try:
+                if content_length:=parsed_request.headers.get('Content-Length'):
 
-                parsed_request = request.Request.from_string(address = address,
-                                                            request = raw_request)
+                    if length_recieved:=len(raw_request.split('\r\n\r\n')[1]) < \
+                    (length_to_recieve:=int(content_length)):
 
-            except Exception:
+                        raw_request += connection.recv(length_to_recieve - \
+                                                       length_recieved)\
+                            .decode(encoding = 'utf-8',
+                                    errors = 'ignore')
 
-                if logger:
-
-                    logger.error(f'Invalid request from {address[0]}:{address[1]}, \
-closing connection.')
-
-                connection.close()
-
-                return None
-
-            if content_length:=parsed_request.headers.get('Content-Length'):
-
-                if length_recieved:=len(raw_request.split('\r\n\r\n')[1]) < \
-                (length_to_recieve:=int(content_length)):
-
-                    raw_request += connection.recv(length_to_recieve - length_recieved)\
-                        .decode(encoding = 'utf-8',
-                                errors = 'ignore')
-
-                    parsed_request = request.Request.from_string(address = address,
+                        parsed_request = request.Request.from_string(address = address,
                                                                 request = raw_request)
-                    
-            if logger:
+                        
+                if self._logger:
 
-                logger.debug(f'Recieved {parsed_request.method.title()} request from \
-{address[0]}:{address[1]} for \
-{parsed_request.path if parsed_request.path else "/"}')
-
-            connection.send(routes.Routes.get_route(path = parsed_request.path,
-                                                    request = parsed_request))
-            
-            if logger:
-
-                logger.debug(f'Sent {parsed_request.method} response to \
+                    self._logger.debug(f'Recieved request from \
 {address[0]}:{address[1]} for {parsed_request.path if parsed_request.path else "/"}')
+
+                connection.send(self._get_route(path = parsed_request.path,
+                                                request = parsed_request))
                 
-            if not parsed_request.headers.get('Connection') == 'keep-alive':
+                if self._logger:
 
-                try:
-            
-                    connection.close()
+                    self._logger.debug(f'Sent {parsed_request.method} response to \
+{address[0]}:{address[1]} for {parsed_request.path if parsed_request.path else "/"}')
 
-                except Exception:
+                if not parsed_request.headers.get('Connection') == 'keep-alive':
 
-                    pass
+                    try:
+                
+                        connection.close()
 
-                if logger:
+                    except Exception:
 
-                    logger.debug(f'Connection closed with \
-{address[0]}:{address[1]} by server.')
+                        pass
+
+                    if self._logger:
+
+                        self._logger.debug(f'Connection closed with \
+{address[0]}:{address[1]} by client.')
+
+                    return None
+
+            except Exception as e:
+
+                if self._logger:
+
+                    self._logger.error(f'Error while handling request from \
+{address[0]}:{address[1]}: "{e}".')                
 
                 return None
 
-        except Exception as e:
+    def __enter__(self) -> Self:
+        '''Starts the server.'''
 
-            if logger:
+        self.start()
 
-                logger.error(f'Error while handling request from \
-{address[0]}:{address[1]}: "{e}".')
-                
+        return self
 
-            return None
+    def __exit__(self, exc_type, exc_value, traceback) -> None:
+        '''Stops the server.'''
 
-def _listen(*,
-           host: str = '127.0.0.1',
-           port: int = '127.0.0.1',
-           logger: logging.Logger = None) -> None:
-    '''Listens for incoming connections and spawns a thread to handle each request.'''
-
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-
-        s.bind((host, port))
-
-        s.listen()
-
-        if logger:
-
-            logger.debug(f'Server hosted on {host}:{port}.')
-
-        while True:
-
-            connection, address = s.accept()
-
-            threading.Thread(target = _handle_request,
-                             kwargs = {'connection': connection,
-                                       'address': address,
-                                       'logger': logger},
-                             daemon = True).start()
-
-def run(*,
-        host: str = '127.0.0.1',
-        port: int = 80,
-        logger: logging.Logger = None) -> None:
-    '''Starts the server. Specify the HOST and PORT to listen on.
-    Optionally, specify a logging.Logger object to log to.'''  
-
-    threading.Thread(target = _listen,
-                    kwargs = {'host': host,
-                              'port': port,
-                              'logger': logger},
-                    daemon = True).start()
-
-    try:
-
-        input('Press Enter to continue...\n')
-
-    except (KeyboardInterrupt, EOFError):
-
-        pass
-
-    if logger:
-
-        logger.info('Exiting server...')
-
-    sys.exit()
+        self.stop()

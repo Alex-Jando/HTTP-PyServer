@@ -16,16 +16,18 @@ python -m pip install HTTP-PyServer
 
 ```
 # Saved as "main.py"
-from server import Routes, run
+import server
 
-@Routes.route('/')
-def index(request):
+app = server.Server()
 
-    return 'Hello, World!'
+@app.route('/')
+def _(request):
 
-if __name__ == '__main__':
+    return 'Hello, world!'
 
-    run()
+with app:
+    
+    app.wait()
 ```
 
 ```
@@ -40,11 +42,11 @@ Look on github, and create a fork of HTTP-PyServer. Submit, pull requests, and a
 
 # Used Packages
 
-Although, no external packages were used, the following packages were imported. All packages are native in Python 3.11.2. Not tested on any other versions, however it should work.
+Although, no external packages were used, the following packages were imported. All packages are native in `Python 3.11.2`. Not tested on any other versions, however it should work.
 
 - `threading`
 - `socket`
-- `sys`
+- `typing`
 - `logging`
 - `os`
 - `json`
