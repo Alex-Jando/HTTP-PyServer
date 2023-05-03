@@ -1,4 +1,4 @@
-import os
+import pathlib
 
 from . import response_messages
 from . import response_codes
@@ -12,7 +12,8 @@ class Routes:
     def __init__(self) -> None:
 
         self._routes: dict[str: callable] = {
-            '/404': lambda request: render.text('''<!DOCTYPE html>
+
+            self._404route: lambda request: render.text('''<!DOCTYPE html>
 
 <html>
 
@@ -33,7 +34,31 @@ class Routes:
 </html>''',
 filetype='html',
 code = response_codes.ResponseCodes.NOT_FOUND,
-message = response_messages.ResponseMessages.NOT_FOUND)
+message = response_messages.ResponseMessages.NOT_FOUND),
+
+            self._500route: lambda request: render.text('''<!DOCTYPE html>
+
+<html>
+
+<head>
+<title>500 Internal Server Error</title>
+</head>
+
+<body>
+
+<h1 style="text-align: center;">500 Internal Server Error</h1>
+
+<hr>
+
+<p style="text-align: center;">HTTP-PyServer</p>
+
+</body>
+
+</html>''',
+filetype='html',
+code = response_codes.ResponseCodes.INTERNAL_SERVER_ERROR,
+message = response_messages.ResponseMessages.INTERNAL_SERVER_ERROR)
+
     }
 
     def route(self,
@@ -46,14 +71,9 @@ message = response_messages.ResponseMessages.NOT_FOUND)
 
             ressource_reference_path = '/' + ressource_reference_path.strip('/')
 
-            if not os.path.exists(ressource_file_path):
+            if pathlib.Path(ressource_file_path).exists():
 
-                self._routes[ressource_reference_path] = \
-                    lambda _: self._routes['/404'](request = request.Request())
-
-            else:
-
-                ressource = render.attachment(filepath = ressource_file_path)
+                ressource = render.file(filepath = ressource_file_path)
 
                 self._routes[ressource_reference_path] = \
                 lambda _, ressource = ressource: ressource
@@ -107,7 +127,7 @@ message = response_messages.ResponseMessages.NOT_FOUND)
                 elif isinstance(message, bytes):
 
                     return message
-                
+
                 elif isinstance(message, response.Response):
 
                     return bytes(message)
@@ -117,7 +137,7 @@ message = response_messages.ResponseMessages.NOT_FOUND)
                     raise TypeError(f'Expected function for {request.path} \
 to return str, bytes, or Response, got {type(message)}.')
 
-        return self._get_route('/404', request = request)
+        return self._get_route(self._404route, request = request)
 
     def _get_route(self,
                   path: str,
@@ -145,6 +165,11 @@ to return str, bytes, or Response, got {type(message)}.')
 
                 raise TypeError(f'Expected function for {request.path} \
 to return str, bytes, or Response, got {type(message)}.')
+            
+        elif pathlib.Path(path).is_relative_to(
+             pathlib.Path('/' + self._static_dir.as_posix().strip('/'))):
+
+            return bytes(render.file(filepath = path.strip('/')))
 
         else:
 

@@ -48,8 +48,9 @@ Although, no external packages were used, the following packages were imported. 
 - `socket`
 - `typing`
 - `logging`
-- `os`
+- `pathlib`
 - `json`
 - `urllib`
 - `mimetypes`
 - `enum`
+- `ssl`

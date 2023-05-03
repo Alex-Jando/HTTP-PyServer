@@ -2,6 +2,8 @@ import threading
 import socket
 import logging
 from typing import Self
+import ssl
+import pathlib
 
 from . import request
 from . import routes
@@ -13,10 +15,12 @@ class Server(routes.Routes):
                  *,
                  host: str = '127.0.0.1',
                  port: int = 80,
-                 logger: logging.Logger = None) -> None:
+                 logger: logging.Logger = None,
+                 _404route: str = '/404',
+                 _500route: str = '/500',
+                 static_dir: str = '/static/',
+                 ssl_context: ssl.SSLContext = None) -> None:
         '''Initializes the server class.'''
-        
-        super().__init__()
         
         self._host: str = host
 
@@ -24,11 +28,29 @@ class Server(routes.Routes):
 
         self._logger: logging.Logger = logger
 
+        self._404route: str = _404route
+
+        self._500route: str = _500route
+
+        self._static_dir: pathlib.Path = pathlib.Path(static_dir.strip('/'))
+
+        if not self._static_dir.exists():
+
+            self._logger.warning('Static directory does not exist.')
+
+        self._ssl_context: ssl.SSLContext = ssl_context
+
+        super().__init__()
+
     def start(self) -> None:
         '''Starts the server.'''
+
+        if self._logger:
+
+            self._logger.info('Starting server...')
         
         threading.Thread(target = self._listen,
-                         daemon = True).start()
+                        daemon = True).start()
         
     def wait(self) -> None:
         '''Waits for Enter key press or KeyboardInterrupt.'''
@@ -60,13 +82,19 @@ class Server(routes.Routes):
 
         self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
+        if self._ssl_context:
+
+            self._socket = self._ssl_context.wrap_socket(self._socket,
+                                                         server_side = True)
+
         self._socket.bind((self._host, self._port))
 
         self._socket.listen()
 
         if self._logger:
 
-            self._logger.info(f'Server hosted on {self._host}:{self._port}.')
+            self._logger.info(f'Server hosted on http{"s" if self._ssl_context else ""}\
+://{self._host}:{self._port}.')
             
         while True:
 
@@ -178,7 +206,18 @@ class Server(routes.Routes):
                 if self._logger:
 
                     self._logger.error(f'Error while handling request from \
-{address[0]}:{address[1]}: "{e}".')                
+{address[0]}:{address[1]} for {parsed_request.path} : "{e}".') 
+
+                try:
+
+                    connection.send(self._get_route(path = self._500route,
+                                                    request = parsed_request))
+                    
+                    connection.close()
+
+                except Exception:
+
+                    pass
 
                 return None
 

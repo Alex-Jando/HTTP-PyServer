@@ -1,8 +1,7 @@
 import mimetypes
-import os
+import pathlib
 
 from . import response_codes
-from . import request
 from . import response
 from . import response_messages
 
@@ -26,8 +25,12 @@ def text(text: str,
          filetype: str = 'txt',
          code: int | response_codes.ResponseCodes = 200,
          message: str | response_messages.ResponseMessages = 'OK',
-         ) -> response.Response:
+         headers: dict = None) -> response.Response:
     '''Returns a text response. Use this to return plain text, JSON, XML, etc.'''
+
+    if not headers:
+
+        headers = {}
 
     if type(code) == response_codes.ResponseCodes:
 
@@ -39,14 +42,11 @@ def text(text: str,
 
     text = text.encode(encoding = 'utf-8',
                        errors = 'ignore')
+    
+    headers['Content-Length'] = str(len(text))
 
-    headers = {
-
-        'Content-Type': mimetypes.guess_type(f'file.{filetype.strip(".")}')[0],
-
-        'Content-Length': str(len(text)),
-
-    }
+    headers['Content-Type'] = mimetypes.guess_type(f'file.{filetype.strip(".")}')[0]\
+                              or 'text/plain'
 
     return response.Response(version = 1.1,
                              code = code,
@@ -56,12 +56,16 @@ def text(text: str,
 
 def file(filepath: str,
          *,
-         request: request.Request = request.Request(),
          templated_vars: dict = {},
          code: int | response_codes.ResponseCodes = 200,
-         message: str | response_messages.ResponseMessages = 'OK'
+         message: str | response_messages.ResponseMessages = 'OK',
+         headers: dict = None
          ) -> response.Response:
     '''Returns a file as a response. Use this to return HTML, CSS, JS, images, etc.'''
+
+    if not headers:
+
+        headers = {}
 
     if type(code) == response_codes.ResponseCodes:
 
@@ -71,7 +75,7 @@ def file(filepath: str,
 
         message = message.value
 
-    if not filepath or not os.path.exists(filepath):
+    if not filepath or not pathlib.Path(filepath).exists():
 
         raise FileNotFoundError(f'File not found: {filepath}')
             
@@ -86,14 +90,9 @@ def file(filepath: str,
         data = _get_template(data = data,
                              **templated_vars)
 
-    headers = {
-
-        'Content-Type': mimetypes.guess_type(filepath)[0]\
-                        or 'application/octet-stream',
-
-        'Content-Length': str(len(data)),
-
-    }
+    headers['Content-Length'] = str(len(data))
+    headers['Content-Type'] = mimetypes.guess_type(filepath)[0]\
+                              or 'application/octet-stream'
 
     return response.Response(version = 1.1,
                              code = code,
@@ -125,15 +124,18 @@ def redirect(url: str) -> response.Response:
 def attachment(filepath: str = '',
                *,
                is_download: bool = False,
-               is_text: bool = False,
                filename: str = '',
-               request: request.Request = request.Request()) -> response.Response:
+               headers: dict = None) -> response.Response:
     '''Returns a file as an attachment.
     Use this to return files for download or viewing.
     Sometimes browsers will preview text files, so you can use is_text
     to force the browser to display the raw text instead of previewing it.'''
 
-    if not filepath or not os.path.exists(filepath):
+    if not headers:
+
+        headers = {}
+
+    if not filepath or not pathlib.Path(filepath).exists():
 
         raise FileNotFoundError(f'File not found: {filepath}')
 
@@ -141,18 +143,11 @@ def attachment(filepath: str = '',
 
         data = f.read()
 
-    headers = {
-
-        'Content-Type': 'text/plain' if is_text else\
-                        mimetypes.guess_type(filepath)[0]\
-                        or 'application/octet-stream',
-
-        'Content-Length': str(len(data)),
-
-        'Content-Disposition': ('attachment' if is_download else 'inline')\
-                                + (f'; filename="{filename}"' if filename else '')
-
-    }
+    headers['Content-Length'] = str(len(data))
+    headers['Content-Type'] = mimetypes.guess_type(filepath)[0]\
+                              or 'application/octet-stream'
+    headers['Content-Disposition'] = ('attachment' if is_download else 'inline')\
+                                     + (f'; filename="{filename}"' if filename else '')
 
     return response.Response(version = 1.1,
                              code = response_codes.ResponseCodes.OK,
