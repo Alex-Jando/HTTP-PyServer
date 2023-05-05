@@ -11,6 +11,8 @@ class Routes:
 
     def __init__(self) -> None:
 
+        self._root = None
+
         self._routes: dict[str: callable] = {
 
             self._404route: lambda request: render.text('''<!DOCTYPE html>
@@ -86,6 +88,16 @@ message = response_messages.ResponseMessages.INTERNAL_SERVER_ERROR)
         
         return callable_route
     
+    def root(self) -> callable:
+
+        def callable_root(route_function):
+
+            self._root = route_function
+
+            return route_function
+
+        return callable_root
+    
     def _get_wildcard_path(self,
                            path: str,
                            *,
@@ -144,6 +156,10 @@ to return str, bytes, or Response, got {type(message)}.')
                   *,
                   request: request.Request = request.Request()) -> bytes:
         '''Gets a route from the _routes dictionary.'''
+
+        if self._root:
+
+            self._root(request)
 
         if path in self._routes:
 

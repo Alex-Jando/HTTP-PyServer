@@ -17,11 +17,17 @@ class Cache:
         '''Adds an item to the cache.
         If the item already exists, it is overwritten.'''
         
-        item._set_parent(self)
+        item._parent = self
 
-        self._items[item.key] = item.value
+        if self._items.get(item.key):
 
-        item._set_expire()
+            self._items[item.key] = item.value
+
+        else:
+
+            self._items[item.key] = item.value
+
+            item._set_expire()
 
     def remove(self,
                key: str) -> None:
@@ -81,12 +87,6 @@ class CacheItem:
         self.key = key
         self.value = value
         self._expire = expire
-
-    def _set_parent(self,
-                    parent: Cache) -> None:
-        '''Sets the parent cache.'''
-
-        self._parent = parent
 
     def _set_expire(self) -> None:
         '''Sets the expiration timer.'''
