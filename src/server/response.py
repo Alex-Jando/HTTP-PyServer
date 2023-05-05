@@ -37,8 +37,8 @@ class Response:
         return f'HTTP/{self.version} {self.code} {self.message}\r\n' \
 + '\r\n'.join([f'{key}: {value}' for key, value in self.headers.items()]) \
 + '\r\n\r\n' \
-+ self.body if isinstance(self.body, str) else self.body.decode(encoding = 'utf-8',
-                                                                errors = 'ignore')
++ (self.body if isinstance(self.body, str) else self.body.decode(encoding = 'utf-8',
+                                                                errors = 'ignore'))
 
     def __bytes__(self):
         '''Returns the response as a bytes object. This is a valid HTTP response.'''
@@ -47,8 +47,8 @@ class Response:
 + '\r\n'.join([f'{key}: {value}' for key, value in self.headers.items()]) + '\r\n\r\n')\
 .encode(encoding = 'utf-8',
         errors = 'ignore')\
-+ self.body if isinstance(self.body, bytes) else self.body.encode(encoding = 'utf-8',
-                                                                  errors = 'ignore')
++ (self.body if isinstance(self.body, bytes) else self.body.encode(encoding = 'utf-8',
+                                                                  errors = 'ignore'))
     
     def __repr__(self):
         '''Returns representation of the response as a string.'''

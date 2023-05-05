@@ -4,21 +4,7 @@ import pathlib
 from . import response_codes
 from . import response
 from . import response_messages
-
-def _get_template(data: bytes,
-                  **template_vars) -> str:
-    '''Replaces all template variables in a data with their values.
-    Template variables are defined as {{var_name}},
-    and are replaced with the value of var_name in template_vars.'''
-    
-    for var_name, var_value in template_vars.items():
-
-        data = data.replace(f'{{{{{var_name}}}}}'.encode(encoding = 'utf-8',
-                                                         errors = 'ignore'),
-                            var_value.encode(encoding = 'utf-8',
-                                             errors = 'ignore'))
-
-    return data
+from . import template
 
 def text(text: str,
          *,
@@ -56,11 +42,11 @@ def text(text: str,
 
 def file(filepath: str,
          *,
-         templated_vars: dict = {},
          code: int | response_codes.ResponseCodes = 200,
          message: str | response_messages.ResponseMessages = 'OK',
-         headers: dict = None
-         ) -> response.Response:
+         headers: dict = None,
+         is_template: bool = False,
+         **templated_values) -> response.Response:
     '''Returns a file as a response. Use this to return HTML, CSS, JS, images, etc.'''
 
     if not headers:
@@ -85,10 +71,19 @@ def file(filepath: str,
 
             data = file.read()
 
-    if templated_vars:
+    if is_template:
 
-        data = _get_template(data = data,
-                             **templated_vars)
+        if not templated_values:
+
+            templated_values = {}
+
+        if isinstance(data, bytes):
+
+            data = data.decode(encoding = 'utf-8',
+                               errors = 'ignore')
+
+        data = template._template(data = data,
+                                  **templated_values)
 
     headers['Content-Length'] = str(len(data))
     headers['Content-Type'] = mimetypes.guess_type(filepath)[0]\
@@ -103,15 +98,11 @@ def file(filepath: str,
 def redirect(url: str) -> response.Response:
     '''Returns a redirect request to the specified URL.'''
 
-    redirect_request = f'HTTP/1.1 301 See Other\
-        \r\nLocation: {url}\
-        \r\nContent-Type: text/html\
-        \r\n\r\n\
-        <html>\
-            <head>\
-                <meta http-equiv="refresh" content="0;URL={url}" />\
-            </head>\
-        </html>'
+    redirect_request = f'''<html>
+    <head>
+        <meta http-equiv="refresh" content="0;URL={url}" />
+    </head>
+</html>'''
 
     return response.Response(version = 1.1,
                              code = response_codes.ResponseCodes.SEE_OTHER,

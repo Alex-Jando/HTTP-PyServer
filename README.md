@@ -49,6 +49,7 @@ Although, no external packages were used, the following packages were imported. 
 - `typing`
 - `logging`
 - `pathlib`
+- `re`
 - `json`
 - `urllib`
 - `mimetypes`

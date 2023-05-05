@@ -18,7 +18,7 @@ class Server(routes.Routes):
                  logger: logging.Logger = None,
                  _404route: str = '/404',
                  _500route: str = '/500',
-                 static_dir: str = '/static/',
+                 static_dir: str = 'static/',
                  ssl_context: ssl.SSLContext = None) -> None:
         '''Initializes the server class.'''
         
@@ -36,7 +36,9 @@ class Server(routes.Routes):
 
         if not self._static_dir.exists():
 
-            self._logger.warning('Static directory does not exist.')
+            if self._logger:
+
+                self._logger.warning(f'Static directory "{static_dir}" does not exist.')
 
         self._ssl_context: ssl.SSLContext = ssl_context
 
