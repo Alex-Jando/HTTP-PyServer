@@ -88,6 +88,25 @@ class Request:
 '\r\n\r\n' + \
 self.body
 
+    def cookies(self):
+        '''Returns the request cookies as a dictionary.'''
+
+        try:
+
+            cookies = {}
+
+            for cookie in self.headers.get('Cookie').split(';'):
+
+                key, value = list(urllib.parse.parse_qs(cookie.strip()).items())[0]
+
+                cookies[key] = value[0]
+
+            return cookies
+        
+        except Exception:
+
+            return {}
+
     def json(self):
         '''Returns the request body as a JSON object.'''
 
