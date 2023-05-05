@@ -5,10 +5,13 @@ class Cache:
     '''Cache class for storing items.'''
 
     def __init__(self,
-                 name: str):
+                 name: str,
+                 reset_on_update: bool = False) -> None:
         '''Initializes the cache class.'''
 
         self._name = name
+
+        self._reset_on_update = reset_on_update
 
         self._items = {}
 
@@ -16,10 +19,16 @@ class Cache:
             item: 'CacheItem') -> None:
         '''Adds an item to the cache.
         If the item already exists, it is overwritten.'''
-        
+
         item._parent = self
 
-        if self._items.get(item.key):
+        if (old_item:=self._items.get(item.key)):
+
+            if self._reset_on_update:
+
+                old_item._timer.cancel()
+
+                item._set_expire()
 
             self._items[item.key] = item.value
 
@@ -91,10 +100,10 @@ class CacheItem:
     def _set_expire(self) -> None:
         '''Sets the expiration timer.'''
 
-        t = threading.Timer(self._expire,
+        self._timer = threading.Timer(self._expire,
                             self._parent.remove,
                             args = (self.key,))
         
-        t.daemon = True
+        self._timer.daemon = True
 
-        t.start()
+        self._timer.start()
