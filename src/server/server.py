@@ -7,6 +7,7 @@ import pathlib
 
 from . import request
 from . import routes
+from . import sessions
 
 class Server(routes.Routes):
     '''HTTP server running on a specified host and port.'''
@@ -19,8 +20,17 @@ class Server(routes.Routes):
                  _404route: str = '/404',
                  _500route: str = '/500',
                  static_dir: str = 'static/',
-                 ssl_context: ssl.SSLContext = None) -> None:
-        '''Initializes the server class.'''
+                 ssl_context: ssl.SSLContext = None,
+                 sessions_expire_after: float = 900) -> None:
+        '''Initializes the server class.
+        
+        :param host: The IP address to run the server on.
+        :param port: The port to run the server on.
+        :param logger: The logger to use for logging.
+        :param _404route: The route to use for 404 errors.
+        :param _500route: The route to use for 500 errors.
+        :param static_dir: The directory to use for static files.
+        :param ssl_context: The SSL context to use for HTTPS.'''
         
         self._host: str = host
 
@@ -42,6 +52,9 @@ class Server(routes.Routes):
 
         self._ssl_context: ssl.SSLContext = ssl_context
 
+        self.sessions: sessions.Sessions = \
+        sessions.Sessions(remove_after = sessions_expire_after)
+
         super().__init__()
 
     def start(self) -> None:
@@ -54,12 +67,13 @@ class Server(routes.Routes):
         threading.Thread(target = self._listen,
                         daemon = True).start()
         
-    def wait(self) -> None:
+    def wait(self,
+             msg: str = '') -> None:
         '''Waits for Enter key press or KeyboardInterrupt.'''
 
         try:
 
-            input('Press Enter to continue...\n')
+            input(msg + '\n' if msg else '')
 
         except (KeyboardInterrupt, EOFError):
 
