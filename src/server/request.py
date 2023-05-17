@@ -83,7 +83,7 @@ class Request:
     def __str__(self):
         '''Returns the request as an HTTP request string.'''
 
-        return f'{self.method} {self.path} {self.version}\r\n' + \
+        return f'{self.method} {self.path if self.path else "/"} {self.version}\r\n' + \
 '\r\n'.join([f'{key}: {value}' for key, value in self.headers.items()]) + \
 '\r\n\r\n' + \
 self.body

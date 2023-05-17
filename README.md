@@ -27,12 +27,12 @@ def _(request):
 
 with app:
     
-    app.wait()
+    app.wait('Press Enter to continue...')
 ```
 
 ```
 $ python main.py
-Press enter to exit...
+Press Enter to continue...
 
 ```
 
@@ -50,6 +50,7 @@ Although, no external packages were used, the following packages were imported. 
 - `logging`
 - `pathlib`
 - `re`
+- `time`
 - `json`
 - `urllib`
 - `mimetypes`

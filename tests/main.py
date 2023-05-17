@@ -9,4 +9,4 @@ def _(request):
 
 with app:
     
-    app.wait()
+    app.wait('Press Enter to continue...')
