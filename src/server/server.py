@@ -98,6 +98,8 @@ class Server(routes.Routes):
 
         self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
+        self._socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+
         if self._ssl_context:
 
             self._socket = self._ssl_context.wrap_socket(self._socket,
