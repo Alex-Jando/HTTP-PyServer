@@ -178,7 +178,7 @@ class Server(routes.Routes):
 
                 if content_length:=parsed_request.headers.get('Content-Length'):
 
-                    if length_recieved:=len(raw_request.split('\r\n\r\n')[1]) < \
+                    if (length_recieved:=len(raw_request.split('\r\n\r\n')[1])) < \
                     (length_to_recieve:=int(content_length)):
 
                         raw_request += connection.recv(length_to_recieve - \
