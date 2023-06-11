@@ -1,3 +1,4 @@
+from typing import Self
 import urllib
 import json
 
@@ -12,7 +13,7 @@ class Request:
                  version: float = '',
                  headers: dict = {},
                  body: str = '',
-                 query: dict = {}):
+                 query: dict = {}) -> None:
         '''Initializes the request class.'''
 
         self.address: tuple[str, int] = address
@@ -33,7 +34,7 @@ class Request:
     def from_bytestring(cls,
                          *,
                          address: tuple = (),
-                         request: bytes):
+                         request: bytes) -> Self:
         '''Creates a request object from an HTTP request string.'''
 
         lines = request.split(b'\r\n')
@@ -80,7 +81,7 @@ class Request:
                    body = body,
                    query = query)
     
-    def __str__(self):
+    def __str__(self) -> str:
         '''Returns the request as an HTTP request string.'''
 
         return f'{self.method} {self.path if self.path else "/"} {self.version}\r\n' + \
@@ -89,7 +90,7 @@ class Request:
 self.body.decode(encoding = 'utf-8',
                  errors = 'ignore')
 
-    def cookies(self):
+    def cookies(self) -> dict[str, list[str]]:
         '''Returns the request cookies as a dictionary.'''
 
         try:
@@ -110,19 +111,19 @@ self.body.decode(encoding = 'utf-8',
 
             return {}
 
-    def json(self):
+    def json(self) -> dict | list:
         '''Returns the request body as a JSON object.'''
 
         return json.loads(self.body.decode(encoding = 'utf-8',
                                            errors = 'ignore'))
     
-    def form(self):
+    def form(self) -> dict[str, list[str]]:
         '''Returns the request body as parsed urlencoded form data.'''
 
         return urllib.parse.parse_qs(self.body.decode(encoding = 'utf-8',
                                                       errors = 'ignore'))
     
-    def files(self):
+    def files(self) -> dict[str, bytes]:
 
         try:
         
