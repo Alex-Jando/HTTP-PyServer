@@ -150,19 +150,19 @@ class Server(routes.Routes):
 
                 if not raw_request:
                         
-                        if self._logger:
+                    if self._logger:
 
-                            self._logger.debug(f'Connection closed by client \
+                        self._logger.debug(f'Connection closed by client \
 {address[0]}:{address[1]}.')
 
-                        connection.close()
+                    connection.close()
 
-                        return None
+                    return None
 
                 try:
 
                     parsed_request = request.Request.from_bytestring(address = address,
-                                                                request = raw_request)
+                                     request = raw_request)
 
                 except Exception:
 
