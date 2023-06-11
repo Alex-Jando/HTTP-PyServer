@@ -9,38 +9,37 @@ class Request:
                  address: tuple = (),
                  method: str = '',
                  path: str = '',
-                 version: str = '',
+                 version: float = '',
                  headers: dict = {},
                  body: str = '',
                  query: dict = {}):
         '''Initializes the request class.'''
 
-        self.address = address
+        self.address: tuple[str, int] = address
 
-        self.method = method
+        self.method: str = method
 
-        self.path = path
+        self.path: str = path
 
-        self.version = version
+        self.version: float = version
 
-        self.headers = headers
+        self.headers: dict[str, str] = headers
 
-        self.body = body
+        self.body: bytes = body
 
-        self.query = query
+        self.query: dict[str, str] = query
 
     @classmethod
-    def from_string(cls,
-                    *args,
-                    address: tuple = (),
-                    request: str):
+    def from_bytestring(cls,
+                         *,
+                         address: tuple = (),
+                         request: bytes):
         '''Creates a request object from an HTTP request string.'''
 
-        lines = request.split('\r\n')
+        lines = request.split(b'\r\n')
 
-        method, path, version = lines[0].split(' ')
-
-        path = urllib.parse.unquote(path).replace('\\', '/')
+        method, path, version = lines[0].decode(encoding = 'utf-8',
+                                                errors = 'ignore').split(' ')
 
         if '?' in path:
 
@@ -48,9 +47,9 @@ class Request:
 
         else:
 
-            query = {}
+            query = ''
 
-        path = path.rstrip('/')
+        path = urllib.parse.unquote(path).rstrip('/')
 
         query = urllib.parse.parse_qs(query)
 
@@ -62,20 +61,21 @@ class Request:
 
         for line in lines[1:]:
 
-            if line == '':
+            if line == b'':
 
                 break
 
-            key, value = line.split(': ')
+            key, value = line.decode(encoding = 'utf-8',
+                                     errors = 'ignore').split(': ')
 
             headers[key] = value
 
-        body = '\r\n'.join(lines[lines.index('') + 1:])
+        body = b'\r\n'.join(lines[lines.index(b'') + 1:])
 
         return cls(address = address,
                    method = method,
                    path = path,
-                   version = version,
+                   version = float(version.split('/')[1]),
                    headers = headers,
                    body = body,
                    query = query)
@@ -86,7 +86,8 @@ class Request:
         return f'{self.method} {self.path if self.path else "/"} {self.version}\r\n' + \
 '\r\n'.join([f'{key}: {value}' for key, value in self.headers.items()]) + \
 '\r\n\r\n' + \
-self.body
+self.body.decode(encoding = 'utf-8',
+                 errors = 'ignore')
 
     def cookies(self):
         '''Returns the request cookies as a dictionary.'''
@@ -97,7 +98,7 @@ self.body
 
             for cookie in self.headers.get('Cookie').split(';'):
 
-                key, value = list(urllib.parse.parse_qs(cookie.strip()).items())[0]
+                key, value = urllib.parse.parse_qs(cookie.strip()).items()
 
                 cookies[key] = value[0]
 
@@ -110,9 +111,52 @@ self.body
     def json(self):
         '''Returns the request body as a JSON object.'''
 
-        return json.loads(self.body)
+        return json.loads(self.body.decode(encoding = 'utf-8',
+                                           errors = 'ignore'))
     
     def form(self):
         '''Returns the request body as parsed urlencoded form data.'''
 
-        return urllib.parse.parse_qs(self.body)
+        return urllib.parse.parse_qs(self.body.decode(encoding = 'utf-8',
+                                                      errors = 'ignore'))
+    
+    def files(self):
+
+        try:
+        
+            boundry = self.headers.get('Content-Type').split('; ')[1].split('=')[1]
+
+            parts = self.body.split(b'--' + boundry.encode(encoding = 'utf-8',
+                                    errors = 'ignore') + b'\r\n')[1:]
+            
+            parts[-1] = parts[-1].split(b'--' + boundry.encode(encoding = 'utf-8',
+                                    errors = 'ignore') + b'--\r\n')[0]
+
+        except Exception:
+
+            return {}
+        
+        files = {}
+        
+        for part in parts:
+
+            try:
+
+                full_header, body = part.split(b'\r\n\r\n', 1)
+
+                full_header = full_header.decode(encoding = 'utf-8',
+                                                 errors = 'ignore').split('\r\n')
+
+                headers = {name: value for name, value in 
+                           [header.split(': ') for header in full_header]}
+                
+                if filename:=(
+                   headers.get('Content-Disposition').split('=')[-1].strip('"')):
+
+                    files[filename] = body
+
+            except Exception:
+
+                continue
+
+        return files

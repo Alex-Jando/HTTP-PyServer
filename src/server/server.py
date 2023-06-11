@@ -138,14 +138,13 @@ class Server(routes.Routes):
             
             try:
 
-                raw_request = ''
+                raw_request = b''
 
                 while True:
 
-                    raw_request += connection.recv(4096).decode(encoding = 'utf-8',
-                                                                errors = 'ignore')
+                    raw_request += connection.recv(4096)
 
-                    if '\r\n\r\n' in raw_request or raw_request == '':
+                    if b'\r\n\r\n' in raw_request or raw_request == b'':
 
                         break
 
@@ -162,15 +161,15 @@ class Server(routes.Routes):
 
                 try:
 
-                    parsed_request = request.Request.from_string(address = address,
-                                                                 request = raw_request)
+                    parsed_request = request.Request.from_bytestring(address = address,
+                                                                request = raw_request)
 
-                except Exception:
+                except Exception as e:
 
                     if self._logger:
 
                         self._logger.error(f'Invalid request from \
-{address[0]}:{address[1]}, closing connection.')
+{address[0]}:{address[1]}, closing connection. {e}')
 
                     connection.close()
 
@@ -178,20 +177,19 @@ class Server(routes.Routes):
 
                 if content_length:=parsed_request.headers.get('Content-Length'):
 
-                    if (length_recieved:=len(raw_request.split('\r\n\r\n')[1])) < \
+                    if (length_recieved:=len(raw_request.split(b'\r\n\r\n')[1])) < \
                     (length_to_recieve:=int(content_length)):
 
                         raw_request += connection.recv(length_to_recieve - \
-                                                       length_recieved)\
-                            .decode(encoding = 'utf-8',
-                                    errors = 'ignore')
+                                                       length_recieved)
 
-                        parsed_request = request.Request.from_string(address = address,
-                                                                request = raw_request)
-                        
+                        parsed_request = request.Request.from_bytestring(
+                                        address = address,
+                                        request = raw_request)
+
                 if self._logger:
 
-                    self._logger.debug(f'Recieved request from \
+                    self._logger.debug(f'Recieved {parsed_request.method} request from \
 {address[0]}:{address[1]} for {parsed_request.path if parsed_request.path else "/"}')
 
                 connection.send(self._get_route(path = parsed_request.path,
