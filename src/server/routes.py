@@ -177,7 +177,7 @@ message = response_messages.ResponseMessages.INTERNAL_SERVER_ERROR)
                         
                             self._root(request)
 
-                    message = self._routes[path](request,
+                    message = self._routes[route](request,
                                                  session,
                                                  *wildcard_values)
                     
@@ -209,7 +209,7 @@ Expires={session.expires}'
                         
                             self._root(request)
 
-                    message = self._routes[path](request,
+                    message = self._routes[route](request,
                                                  *wildcard_values)
 
                     if isinstance(message, str):
