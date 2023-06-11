@@ -6,7 +6,7 @@ from typing import Any
 class Session:
      
     def __init__(self,
-                session_id: str) -> None:
+                 session_id: str) -> None:
         '''Initializes the session class.'''
         
         self._session_id: str = session_id
@@ -29,14 +29,12 @@ class Session:
 
     def remove(self,
                key: str) -> None:
-         
         '''Removes an item from the session.'''
 
         self._items.pop(key)
 
     def get(self,
             key: str) -> Any:
-         
         '''Gets an item from the session. Returns "None" if the item does not exist.'''
 
         return self._items.get(key)
@@ -46,7 +44,7 @@ class Session:
 
         self._parent.remove(self._session_id)
 
-        while self._parent._session.get(session_id := secrets.token_urlsafe(128)):
+        while self._parent._sessions.get(session_id := secrets.token_urlsafe(128)):
              pass
         
         self._session_id = session_id
