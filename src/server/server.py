@@ -164,12 +164,12 @@ class Server(routes.Routes):
                     parsed_request = request.Request.from_bytestring(address = address,
                                                                 request = raw_request)
 
-                except Exception as e:
+                except Exception:
 
                     if self._logger:
 
                         self._logger.error(f'Invalid request from \
-{address[0]}:{address[1]}, closing connection. {e}')
+{address[0]}:{address[1]}, closing connection.')
 
                     connection.close()
 

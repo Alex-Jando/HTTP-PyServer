@@ -98,13 +98,15 @@ self.body.decode(encoding = 'utf-8',
 
             for cookie in self.headers.get('Cookie').split(';'):
 
-                key, value = urllib.parse.parse_qs(cookie.strip()).items()
+                key, value = list(urllib.parse.parse_qs(cookie.strip()).items())[0]
 
                 cookies[key] = value[0]
 
             return cookies
         
-        except Exception:
+        except Exception as e:
+
+            print(e)
 
             return {}
 
