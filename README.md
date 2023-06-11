@@ -56,3 +56,4 @@ Although, no external packages were used, the following packages were imported. 
 - `mimetypes`
 - `enum`
 - `ssl`
+- `secrets`
