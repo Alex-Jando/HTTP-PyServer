@@ -105,9 +105,7 @@ self.body.decode(encoding = 'utf-8',
 
             return cookies
         
-        except Exception as e:
-
-            print(e)
+        except Exception:
 
             return {}
 
