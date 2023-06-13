@@ -177,15 +177,15 @@ class Server(routes.Routes):
 
                 if content_length:=parsed_request.headers.get('Content-Length'):
 
-                    if (length_recieved:=len(raw_request.split(b'\r\n\r\n')[1])) < \
-                    (length_to_recieve:=int(content_length)):
+                    content_length = int(content_length)
+                        
+                    while (body_length:=len(raw_request.split(b'\r\n\r\n', 1)[1])) < (content_length):
 
-                        raw_request += connection.recv(length_to_recieve - \
-                                                       length_recieved)
+                        raw_request += connection.recv(content_length - body_length)
 
-                        parsed_request = request.Request.from_bytestring(
-                                        address = address,
-                                        request = raw_request)
+                    parsed_request = request.Request.from_bytestring(
+                                    address = address,
+                                    request = raw_request)
 
                 if self._logger:
 
