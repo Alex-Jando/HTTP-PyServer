@@ -179,7 +179,8 @@ class Server(routes.Routes):
 
                     content_length = int(content_length)
                         
-                    while (body_length:=len(raw_request.split(b'\r\n\r\n', 1)[1])) < (content_length):
+                    while (body_length:=len(raw_request.split(b'\r\n\r\n', 1)[1]))\
+                    < (content_length):
 
                         raw_request += connection.recv(content_length - body_length)
 
