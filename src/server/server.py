@@ -225,7 +225,7 @@ class Server(routes.Routes):
                 if self._logger:
 
                     self._logger.error(f'Error while handling request from \
-{address[0]}:{address[1]} for {parsed_request.path} : "{e}".') 
+{address[0]}:{address[1]} : "{e}".') 
 
                 try:
 
