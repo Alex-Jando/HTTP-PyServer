@@ -175,7 +175,8 @@ class Server(routes.Routes):
 
                     return None
 
-                if content_length:=parsed_request.headers.get('Content-Length'):
+                if content_length:=(parsed_request.headers.get('Content-Length') or \
+                                    parsed_request.headers.get('content-length')):
 
                     content_length = int(content_length)
                         
@@ -201,7 +202,8 @@ class Server(routes.Routes):
                     self._logger.debug(f'Sent {parsed_request.method} response to \
 {address[0]}:{address[1]} for {parsed_request.path if parsed_request.path else "/"}')
 
-                if not parsed_request.headers.get('Connection') == 'keep-alive':
+                if not (parsed_request.headers.get('Connection') or \
+                        parsed_request.headers.get('connection')) == 'keep-alive':
 
                     try:
                 

@@ -185,7 +185,8 @@ message = response_messages.ResponseMessages.INTERNAL_SERVER_ERROR)
 
                         message = render.text(text = message)
 
-                    if cookies:=message.headers.get('Set-Cookie'):
+                    if cookies:=(message.headers.get('Set-Cookie') or \
+                                 message.headers.get('set-cookie')):
 
                         cookies += f', SESSION_ID={session.id}; \
 Expires={session.expires}'

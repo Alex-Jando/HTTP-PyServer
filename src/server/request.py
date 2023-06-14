@@ -97,7 +97,9 @@ self.body.decode(encoding = 'utf-8',
 
             cookies = {}
 
-            for cookie in self.headers.get('Cookie').split(';'):
+            raw_cookies = self.headers.get('Cookie') or self.headers.get('cookie')
+
+            for cookie in raw_cookies.split(';'):
 
                 key, value = list(urllib.parse.parse_qs(cookie.strip()).items())[0]
 
@@ -124,8 +126,11 @@ self.body.decode(encoding = 'utf-8',
     def files(self) -> dict[str, bytes]:
 
         try:
+
+            content_type = self.headers.get('Content-Type') or\
+            self.headers.get('content-type')
         
-            boundry = self.headers.get('Content-Type').split('; ')[1].split('=')[1]
+            boundry = content_type.split('; ')[1].split('=')[1]
 
             parts = self.body.split(b'--' + boundry.encode(encoding = 'utf-8',
                                     errors = 'ignore') + b'\r\n')[1:]
@@ -152,7 +157,8 @@ self.body.decode(encoding = 'utf-8',
                            [header.split(': ') for header in full_header]}
                 
                 if filename:=(
-                   headers.get('Content-Disposition').split('=')[-1].strip('"')):
+                   (headers.get('Content-Disposition') or \
+                    headers.get('content-disposition')).split('=')[-1].strip('"')):
 
                     files[filename] = body
 
