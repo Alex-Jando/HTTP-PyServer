@@ -1,7 +1,6 @@
 import logging
 import json
-import os
-from server import Server, ResponseCodes, ResponseMessages, Cache, CacheItem, render
+from server import Server, Cache, CacheItem, render
 
 logger = logging.getLogger("HTTP-PyServer-Example")
 logger.setLevel(logging.DEBUG)
