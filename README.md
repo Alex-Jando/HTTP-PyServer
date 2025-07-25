@@ -7,7 +7,7 @@ HTTP-PyServer is also very flexible on your project layout. It ensures security 
 # Features
 
 - Return various filetypes (HTML, CSS, JS, JSON, Images, Video)
-- Get information from the users request (Headers, IP Address, Queries)
+- Get information from the users request (Headers, IP Addresses, Queries)
 - Handle any HTTP request type
 - Use a custom logger to record any server activity how you want
 - Utilizes multi-threading to ensure quick response times
