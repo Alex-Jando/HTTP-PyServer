@@ -38,6 +38,18 @@ class Server(routes.Routes):
 
         self._logger: logging.Logger = logger
 
+        if not self._logger:
+
+            logger = logging.getLogger(__name__)
+            logger.setLevel(logging.INFO)
+            console_handler = logging.StreamHandler()
+            console_handler.setLevel(logging.INFO)
+            logger.addHandler(console_handler)
+
+            self._logger: logging.Logger = logger
+
+            self._logger.warning('No logger was provided to the server so one was automatically created.')
+
         self._404route: str = _404route
 
         self._500route: str = _500route
