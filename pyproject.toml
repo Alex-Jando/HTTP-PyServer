@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "HTTP-PyServer"
+version = "0.1.4.4"
+authors = [
+  { name="Alex-Jando", email="alexjando2007@outlook.com" },
+]
+description = "Simple way to make complex HTTP servers with python"
+readme = "README.md"
+requires-python = ">=3.7"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/Alex-Jando/HTTP-PyServer"
+"Bug Tracker" = "https://github.com/Alex-Jando/HTTP-PyServer/issues"

@@ -4,6 +4,19 @@ HTTP-PyServer is a simple, and extremely light-weight solution to create powerfu
 
 HTTP-PyServer is also very flexible on your project layout. It ensures security by allowing you to specify which files to send, and to where. HTTP-PyServer allows you to do everything you need whilst keeping hands relaxed with as few lines of code as possible.
 
+# Features
+
+- Return various filetypes (HTML, CSS, JS, JSON, Images, Video)
+- Get information from the users request (Headers, IP Address, Queries)
+- Handle any HTTP request type
+- Use a custom logger to record any server activity how you want
+- Utilizes multi-threading to ensure quick response times
+- Relies on **NO NON-NATIVE LIBRARIES** which leads to super quick runtimes
+- Handle wildcard routes to access different ressources
+- Cache information in the server and automaticall delete it after a certain time
+- Store user data in sessions to identify profiles
+- Integrate python code into your static files with templating
+
 # Installing
 
 Install HTTP-PyServer using pip from the command line.
@@ -38,11 +51,11 @@ Press Enter to continue...
 
 # Contributing
 
-Look on github, and create a fork of HTTP-PyServer. Submit, pull requests, and any features will be looked at, and potentially implemented.
+Look on github, and create a fork of HTTP-PyServer. Submit pull requests, and any features will be looked at and potentially implemented.
 
 # Used Packages
 
-Although, no external packages were used, the following packages were imported. All packages are native in `Python 3.11.2`. Not tested on any other versions, however it should work.
+Although, no external packages were used, the following packages were imported. All packages are native in `Python 3.7+`.
 
 - `threading`
 - `socket`
