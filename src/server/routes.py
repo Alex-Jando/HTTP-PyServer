@@ -1,3 +1,4 @@
+import logging
 import pathlib
 
 from . import response_messages
@@ -263,8 +264,16 @@ to return str, or Response, got {type(message)}.')
                     
                         self._root(request)
 
-                message = self._routes[path](request,
-                                             session)
+                try:
+
+                    message = self._routes[path](request,
+                                                session)
+                    
+                except Exception as e:
+
+                    self._logger.exception(e)
+
+                    message = self._routes[self._500route](request, session)
                 
                 if isinstance(message, str):
 
@@ -293,7 +302,15 @@ Expires={session.expires}'
                     
                         self._root(request)
 
-                message = self._routes[path](request)
+                try:
+
+                    message = self._routes[path](request)
+                    
+                except Exception as e:
+
+                    self._logger.exception(e)
+
+                    message = self._routes[self._500route](request)
 
                 if isinstance(message, str):
 

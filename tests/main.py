@@ -5,7 +5,7 @@ app = server.Server()
 @app.route('/')
 def _(request):
 
-    return 'Hello, world!'
+    return 'Hello, World!'
 
 with app:
     

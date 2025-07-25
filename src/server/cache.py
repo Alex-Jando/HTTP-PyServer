@@ -30,11 +30,11 @@ class Cache:
 
                 item._set_expire()
 
-            self._items[item.key] = item.value
+            self._items[item.key] = item
 
         else:
 
-            self._items[item.key] = item.value
+            self._items[item.key] = item
 
             item._set_expire()
 
@@ -56,7 +56,11 @@ class Cache:
         '''Gets value of an item from the cache.
         If the value of the item does not exist, returns None.'''
         
-        return self._items.get(key)
+        if (item:=self._items.get(key)):
+        
+            return item.value
+        
+        return None
     
     def __getitem__(self,
                     key: str) -> Any:

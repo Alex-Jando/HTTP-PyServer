@@ -32,6 +32,7 @@ class Server(routes.Routes):
         :param static_dir: The directory to use for static files.
         :param ssl_context: The SSL context to use for HTTPS.'''
         
+        
         self._host: str = host
 
         self._port: int = port
@@ -66,6 +67,7 @@ class Server(routes.Routes):
 
         self.sessions: sessions.Sessions = \
         sessions.Sessions(remove_after = sessions_expire_after)
+
 
         super().__init__()
 
